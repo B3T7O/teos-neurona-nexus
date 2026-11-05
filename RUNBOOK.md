@@ -44,3 +44,11 @@ Sistema completo y operativo. Produce trabajo real:
 - Decisión: data/raw/bitaxe_control.jsonl
 
 Web en http://127.0.0.1:8765
+
+## Hallazgo conocido (audit 2026-11-05)
+
+Cobertura eval ridge_live: 72.3% (10196/14099). Los ~3849 sin outcome
+son predicciones historicas (23 oct - 1 nov) que quedaron sin evaluar
+durante el desarrollo del learning_loop. El sistema actual evalua
+correctamente (cobertura diaria ~99% en dias recientes). No requiere
+accion; documentado por transparencia.
