@@ -130,7 +130,7 @@ def check_ranges(recs, name, results):
             results.append(R(R.WARN, "range", f"{name}.{f}: {len(out)}/{len(vals)} fuera de [{lo},{hi}]",
                              {"min": min(out), "max": max(out)}))
 
-def check_quality(outcomes, preds, samples, results):
+def check_quality(outcomes, preds, samples, results, skip_cobertura=False):
     apes = [r.get("absolute_percentage_error") for r in outcomes
             if isinstance(r.get("absolute_percentage_error"), (int, float))]
     if apes:
@@ -138,7 +138,7 @@ def check_quality(outcomes, preds, samples, results):
         results.append(R(R.OK, "quality",
             f"APE: mean={mean(apes):.2f}% median={median(apes):.2f}% p95={p95:.2f}%",
             {"n": len(apes), "mean": round(mean(apes), 4), "median": round(median(apes), 4), "p95": round(p95, 4)}))
-    if preds and outcomes:
+    if preds and outcomes and not skip_cobertura:
         pred_ids = {r.get("prediction_id") for r in preds if r.get("prediction_id")}
         outcome_ids = {r.get("prediction_id") for r in outcomes if r.get("prediction_id")}
         matched = pred_ids & outcome_ids
@@ -223,9 +223,14 @@ def main():
     for name in ["ridge_live_predictions", "learning_outcomes_v2"]:
         if data.get(name): check_dup(name, data[name], "prediction_id", results)
     if data.get("bitaxe_samples"): check_ranges(data["bitaxe_samples"], "bitaxe_samples", results)
+    skip_cob = args.tail is not None
+    if skip_cob:
+        results.append(R(R.OK, "quality",
+            "Cobertura eval: no aplica en modo --tail (desfase temporal) - usar sin --tail"))
     check_quality(data.get("learning_outcomes_v2") or [],
                   data.get("ridge_live_predictions") or [],
-                  data.get("bitaxe_samples") or [], results)
+                  data.get("bitaxe_samples") or [], results,
+                  skip_cobertura=skip_cob)
     if args.full: check_system(results)
 
     if args.json:
