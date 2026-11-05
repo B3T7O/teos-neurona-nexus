@@ -2699,5 +2699,43 @@ if (anomalies) {
 })();
 </script>
 
+<script>
+// TEOS MOOD BADGE START
+(function(){
+  function ensureBadge() {
+    var panel = document.getElementById('prediction-lab');
+    if (!panel) return null;
+    var existing = panel.querySelector('#neuron-mood');
+    if (existing) return existing;
+    var b = document.createElement('div');
+    b.id = 'neuron-mood';
+    b.style.cssText = 'display:flex;align-items:center;gap:12px;padding:12px 16px;margin:0 0 14px;background:rgba(12,20,34,0.9);border:1px solid #1a2942;border-radius:10px;font-family:ui-monospace,monospace;font-size:13px;transition:border-color 0.4s,box-shadow 0.4s';
+    b.innerHTML = '<div id="neuron-dot" style="width:14px;height:14px;border-radius:50%;background:#00c8ff;box-shadow:0 0 10px #00c8ff;transition:background 0.4s,box-shadow 0.4s;flex-shrink:0"></div><div style="flex:1;min-width:0"><div id="neuron-label" style="font-weight:700;letter-spacing:1.5px;color:#00c8ff;transition:color 0.4s;font-size:12px">INICIANDO...</div><div id="neuron-detail" style="color:#8fa9c9;font-size:11px;margin-top:3px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap"></div></div>';
+    panel.insertBefore(b, panel.firstChild);
+    return b;
+  }
+  async function refresh() {
+    try {
+      var r = await fetch('/api/neuron-state', {cache:'no-store'});
+      if (!r.ok) return;
+      var s = await r.json();
+      var b = ensureBadge(); if (!b) return;
+      var dot = b.querySelector('#neuron-dot');
+      var lbl = b.querySelector('#neuron-label');
+      var det = b.querySelector('#neuron-detail');
+      dot.style.background = s.color;
+      dot.style.boxShadow = '0 0 12px ' + s.color;
+      lbl.textContent = s.label; lbl.style.color = s.color;
+      det.textContent = s.detail || '';
+      b.style.borderColor = s.color;
+      b.style.boxShadow = '0 0 20px ' + s.color + '22';
+    } catch(e){}
+  }
+  setInterval(refresh, 3000);
+  setInterval(ensureBadge, 1500);
+  setTimeout(refresh, 500);
+})();
+// TEOS MOOD BADGE END
+</script>
 </body>
 </html>

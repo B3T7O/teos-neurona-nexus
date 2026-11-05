@@ -292,6 +292,27 @@ class Handler(SimpleHTTPRequestHandler):
         super().__init__(*args, directory=str(WEB), **kwargs)
 
     def do_GET(self):
+        if self.path.startswith("/api/neuron-state"):
+            try:
+                from neuron_state import get_state
+                payload = json.dumps(get_state()).encode("utf-8")
+                self.send_response(200)
+                self.send_header("Content-Type", "application/json; charset=utf-8")
+                self.send_header("Cache-Control", "no-store")
+                self.send_header("Content-Length", str(len(payload)))
+                self.end_headers()
+                self.wfile.write(payload)
+            except Exception as e:
+                msg = json.dumps({"state": "error", "detail": str(e)}).encode("utf-8")
+                try:
+                    self.send_response(500)
+                    self.send_header("Content-Type", "application/json")
+                    self.send_header("Content-Length", str(len(msg)))
+                    self.end_headers()
+                    self.wfile.write(msg)
+                except Exception:
+                    pass
+            return
         if self.path.split("?")[0] == "/api/audit/summary":
             payload = build_audit_summary()
             body = json.dumps(payload, ensure_ascii=False).encode("utf-8")
