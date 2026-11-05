@@ -42,3 +42,6 @@ data/processed/*.before_refresh_*
 logs/collector.log
 logs/scheduler.log
 logs/web-server.log
+
+# Reportes del audit engine (se regeneran)
+data/audit/
