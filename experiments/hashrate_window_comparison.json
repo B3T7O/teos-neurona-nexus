@@ -1,0 +1,37 @@
+{
+  "title": "TEOS — Comparación de referencias de hashrate",
+  "source": "data/raw/bitaxe_samples.jsonl",
+  "read_only": true,
+  "valid_unique_samples": 845,
+  "invalid_lines": 0,
+  "historical_split": 591,
+  "test_samples_common": 254,
+  "prediction_target": "hashRate de la siguiente muestra",
+  "results": {
+    "Último hashRate": {
+      "n": 254,
+      "mae_ghs": 35.11138099015747,
+      "rmse_ghs": 42.67319788120464,
+      "mean_absolute_relative_error_pct": 3.2763098663747394
+    },
+    "Media de cinco hashRate": {
+      "n": 254,
+      "mae_ghs": 28.222320416062992,
+      "rmse_ghs": 34.551173457671396,
+      "mean_absolute_relative_error_pct": 2.635637467630126
+    },
+    "hashRate_10m previo": {
+      "n": 254,
+      "mae_ghs": 25.099555312598422,
+      "rmse_ghs": 31.036175090659963,
+      "mean_absolute_relative_error_pct": 2.346721945264211
+    },
+    "hashRate_1h previo": {
+      "n": 254,
+      "mae_ghs": 24.948924870078745,
+      "rmse_ghs": 30.7962035323931,
+      "mean_absolute_relative_error_pct": 2.3330086089116002
+    }
+  },
+  "note": "Solo se usan valores de la muestra anterior y anteriores. Esto compara referencias; no entrena un modelo."
+}

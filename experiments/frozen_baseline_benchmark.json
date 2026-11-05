@@ -1,0 +1,42 @@
+{
+  "snapshot_sha256": "dfdd8f2533d89190e94f5ef113c2a24a43325df1d51c93ad810ff417b53379a5",
+  "snapshot": "experiments/frozen_bitaxe_samples.jsonl",
+  "split_fraction": 0.7,
+  "prediction_target": "next sample hashRate",
+  "test_samples_common": 254,
+  "invalid_rows_after_full_validation": 0,
+  "results": {
+    "last_hashRate": {
+      "n": 254,
+      "mae_ghs": 35.00316181338582,
+      "rmse_ghs": 42.60561426431997,
+      "mean_absolute_relative_error_pct": 3.2664256580704865
+    },
+    "mean_previous_5": {
+      "n": 254,
+      "mae_ghs": 28.14522676598425,
+      "rmse_ghs": 34.48670325440637,
+      "mean_absolute_relative_error_pct": 2.628696271492993
+    },
+    "previous_hashRate_10m": {
+      "n": 254,
+      "mae_ghs": 25.11844449212598,
+      "rmse_ghs": 31.045402322636335,
+      "mean_absolute_relative_error_pct": 2.348647683145504
+    },
+    "previous_hashRate_1h": {
+      "n": 254,
+      "mae_ghs": 24.98577712874016,
+      "rmse_ghs": 30.813964608113245,
+      "mean_absolute_relative_error_pct": 2.336616533970615
+    }
+  },
+  "best_baseline_by_mae": "previous_hashRate_1h",
+  "training_performed": false,
+  "notes": [
+    "All methods use the same chronological test targets.",
+    "Predictors use only the previous sample and older observations.",
+    "This benchmark does not train a model.",
+    "This benchmark does not establish Bitcoin block prediction ability."
+  ]
+}

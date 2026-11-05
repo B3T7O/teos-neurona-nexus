@@ -1,0 +1,2703 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>TEOS NEURONA NEXUS</title>
+<style>
+:root {
+  color-scheme: dark;
+  --bg: #060912;
+  --panel: #0c1422;
+  --blue: #00c8ff;
+  --green: #00ff9d;
+  --red: #ff3158;
+  --text: #e6f5ff;
+  --muted: #8295aa;
+    --violet: #8B5CF6;
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  background: radial-gradient(ellipse at top, #10243a, var(--bg) 65%);
+  color: var(--text);
+  font-family: "Segoe UI", Arial, sans-serif;
+  min-height: 100vh;
+}
+header {
+  padding: 24px;
+  border-bottom: 1px solid #17344a;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+h1 { margin: 0; letter-spacing: 3px; font-size: 23px; }
+h1 span { color: var(--blue); }
+.subtitle { color: var(--muted); margin-top: 8px; font-size: 12px; }
+.status { color: var(--green); font-size: 12px; }
+main { max-width: 1250px; margin: auto; padding: 20px; }
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit,minmax(220px,1fr));
+  gap: 14px;
+}
+.panel {
+  background: linear-gradient(145deg,#101d2e,#080e19);
+  border: 1px solid #1b3a50;
+  border-radius: 12px;
+  padding: 18px;
+  box-shadow: 0 0 18px #00c8ff08;
+}
+.metric-label { color: var(--muted); font-size: 11px; letter-spacing: 1.5px; }
+.metric { font-size: 30px; margin: 12px 0 5px; font-weight: 600; }
+.blue { color: var(--blue); text-shadow: 0 0 14px #00c8ff55; }
+.green { color: var(--green); text-shadow: 0 0 14px #00ff9d44; }
+.red { color: var(--red); text-shadow: 0 0 14px #ff315844; }
+.small { color: var(--muted); font-size: 12px; }
+.section-title { font-size: 13px; letter-spacing: 2px; margin: 0 0 15px; }
+#neuron { width: 100%; height: 300px; display: block; }
+
+/* ===== TEOS NEURONA CENTER CORE ===== */
+.nc-core { margin-top:16px; overflow:hidden; }
+.nc-core-head { display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap; }
+.nc-core-tag { color:var(--green); font-size:11px; letter-spacing:2px; }
+.nc-core-layout { display:grid; grid-template-columns:minmax(0,1.4fr) minmax(180px,.8fr); gap:18px; align-items:center; }
+.nc-scene { height:290px; display:grid; place-items:center; perspective:850px; overflow:hidden; position:relative; }
+.nc-scene::before { content:""; position:absolute; width:210px; height:210px; border:1px solid #00c8ff30; border-radius:50%; box-shadow:0 0 45px #00c8ff12,inset 0 0 35px #00c8ff10; }
+.nc-cube { position:relative; width:128px; height:128px; transform-style:preserve-3d; animation:nc-rotation 18s linear infinite; }
+.nc-face { position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:8px; padding:9px; text-align:center; border:1px solid #00c8ffb0; background:linear-gradient(145deg,#00c8ff25,#07121feF); box-shadow:inset 0 0 25px #00c8ff16,0 0 18px #00c8ff24; color:var(--text); font-size:10px; letter-spacing:1px; backface-visibility:visible; }
+.nc-face strong { color:var(--green); font-size:11px; }
+.nc-face span { color:var(--muted); font-size:9px; letter-spacing:.5px; }
+.nc-front { transform:translateZ(64px); }
+.nc-back { transform:rotateY(180deg) translateZ(64px); }
+.nc-right { transform:rotateY(90deg) translateZ(64px); }
+.nc-left { transform:rotateY(-90deg) translateZ(64px); }
+.nc-top { transform:rotateX(90deg) translateZ(64px); }
+.nc-bottom { transform:rotateX(-90deg) translateZ(64px); }
+.nc-paused .nc-cube { animation-play-state:paused; }
+@keyframes nc-rotation { from { transform:rotateX(-18deg) rotateY(0deg) rotateZ(0deg); } to { transform:rotateX(342deg) rotateY(360deg) rotateZ(180deg); } }
+.nc-core-side { border-left:1px solid #1b3a50; padding-left:18px; }
+.nc-core-side h3 { font-size:12px; letter-spacing:1.5px; color:var(--blue); }
+.nc-core-side p { color:var(--muted); font-size:12px; line-height:1.7; }
+.nc-core-controls { display:flex; gap:8px; flex-wrap:wrap; margin-top:12px; }
+.nc-core-controls button { background:#0c1b2a; color:var(--blue); border:1px solid #00c8ff55; border-radius:7px; padding:9px 12px; cursor:pointer; }
+.nc-core-controls button:hover { background:#102b3b; }
+.nc-core-note { margin-top:10px; color:var(--muted); font-size:10px; line-height:1.6; }
+
+/* ===== NEURONA EXPERIENCE MEMORY ===== */
+.memory-panel { margin-top:16px; border-color:#8B5CF655; box-shadow:0 0 22px #8B5CF610; }
+.memory-heading { display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:10px; }
+.memory-tag, .memory-accent { color:var(--violet); }
+.memory-tag { font-size:11px; letter-spacing:1.5px; }
+.memory-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(155px,1fr)); gap:12px; margin-top:14px; }
+.memory-stat, .memory-method { border:1px solid #8B5CF633; border-radius:9px; padding:14px; background:linear-gradient(145deg,#17152b,#0b1020); min-width:0; }
+.memory-stat .metric { font-size:24px; overflow-wrap:anywhere; }
+.memory-methods { display:grid; grid-template-columns:repeat(auto-fit,minmax(215px,1fr)); gap:10px; margin-top:14px; }
+.memory-method h3 { color:var(--violet); font-size:12px; margin:0 0 10px; overflow-wrap:anywhere; }
+.memory-method p, .memory-recent p { color:var(--muted); font-size:12px; line-height:1.6; margin:5px 0; overflow-wrap:anywhere; }
+.memory-latest { margin-top:14px; padding:12px; border-left:2px solid var(--violet); background:#8B5CF60a; }
+.memory-recent { margin-top:12px; display:grid; gap:8px; }
+.memory-experience { padding:10px 12px; border:1px solid #8B5CF622; border-radius:7px; background:#090e1b; }
+/* ===== END EXPERIENCE MEMORY ===== */
+
+@media(max-width:650px) {
+  .nc-core-layout { grid-template-columns:1fr; }
+  .nc-core-side { border-left:0; border-top:1px solid #1b3a50; padding:12px 0 0; }
+  .nc-scene { height:250px; }
+}
+/* ===== END TEOS NEURONA CENTER CORE ===== */
+
+
+/* ===== TEOS NEXUS 2.0 VISUAL LAYER ===== */
+:root {
+  --bg: #030711;
+  --panel: #080f1d;
+  --blue: #20d9ff;
+  --green: #36ffc0;
+  --red: #ff5277;
+  --text: #e7f6ff;
+  --muted: #8298b3;
+  --violet: #a78bfa;
+}
+body {
+  background:
+    radial-gradient(ellipse at 53% 0%, #10304b66, transparent 48%),
+    linear-gradient(135deg, #030711 0%, #07101d 52%, #030711 100%);
+  background-attachment: fixed;
+}
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: -1;
+  opacity: .19;
+  background-image:
+    linear-gradient(#1a54701c 1px, transparent 1px),
+    linear-gradient(90deg, #1a54701c 1px, transparent 1px);
+  background-size: 34px 34px;
+}
+header {
+  position: relative;
+  padding: 18px clamp(16px, 3vw, 42px);
+  background: #050b16d9;
+  border-bottom: 1px solid #1c536c;
+  box-shadow: 0 8px 36px #0007;
+  backdrop-filter: blur(14px);
+}
+h1 {
+  font-size: clamp(19px, 2vw, 27px);
+  letter-spacing: 3.5px;
+  text-shadow: 0 0 22px #20d9ff26;
+}
+h1 span { color: var(--blue); }
+.subtitle {
+  letter-spacing: 1.4px;
+  line-height: 1.6;
+}
+.status {
+  padding: 9px 12px;
+  border: 1px solid #36ffc044;
+  border-radius: 5px;
+  background: #36ffc00b;
+  letter-spacing: 1px;
+}
+main {
+  max-width: 1680px;
+  padding: clamp(12px, 2vw, 28px);
+}
+.grid {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+}
+.panel {
+  position: relative;
+  min-width: 0;
+  background:
+    linear-gradient(145deg, #0c1929f5, #060c17f5);
+  border: 1px solid #1a3a52;
+  border-radius: 9px;
+  padding: clamp(13px, 1.5vw, 21px);
+  box-shadow: inset 0 1px #8bdfff08, 0 12px 34px #0003;
+  transition: border-color .2s ease, box-shadow .2s ease;
+}
+.panel:hover {
+  border-color: #24708b;
+  box-shadow: inset 0 1px #8bdfff0d, 0 0 24px #20d9ff0b;
+}
+.metric-label {
+  font-size: 10px;
+  letter-spacing: 1.6px;
+  line-height: 1.7;
+}
+.metric {
+  font-size: clamp(22px, 2.2vw, 32px);
+  overflow-wrap: anywhere;
+}
+.small {
+  line-height: 1.65;
+  overflow-wrap: anywhere;
+}
+.section-title {
+  font-size: 12px;
+  letter-spacing: 1.8px;
+  line-height: 1.7;
+}
+#neuron {
+  height: 210px;
+}
+.nc-core {
+  margin-top: 12px;
+  border-color: #20d9ff55;
+  background:
+    radial-gradient(ellipse at 34% 48%, #0b34522e, transparent 48%),
+    linear-gradient(145deg, #091526, #040914);
+  box-shadow: inset 0 0 50px #20d9ff07, 0 0 30px #20d9ff08;
+}
+.nc-core-head {
+  padding-bottom: 12px;
+  border-bottom: 1px solid #1b3a504f;
+}
+.nc-core-tag {
+  font-size: 10px;
+  letter-spacing: 1.5px;
+}
+.nc-core-layout {
+  grid-template-columns: minmax(0, 1.45fr) minmax(220px, .75fr);
+  gap: clamp(12px, 2vw, 28px);
+}
+.nc-scene {
+  height: 340px;
+  background: radial-gradient(ellipse, #0b6a8c12, transparent 62%);
+}
+.nc-scene::before {
+  width: 230px;
+  height: 230px;
+  border-color: #20d9ff55;
+  box-shadow: 0 0 55px #20d9ff16, inset 0 0 38px #20d9ff12;
+}
+.nc-cube {
+  width: 138px;
+  height: 138px;
+  filter: drop-shadow(0 0 18px #20d9ff20);
+}
+.nc-face {
+  border-color: #20d9ffb0;
+  background: linear-gradient(145deg, #0b52705c, #07101ff5);
+  box-shadow: inset 0 0 28px #20d9ff13, 0 0 20px #20d9ff1c;
+}
+.nc-front { transform: translateZ(69px); }
+.nc-back { transform: rotateY(180deg) translateZ(69px); }
+.nc-right { transform: rotateY(90deg) translateZ(69px); }
+.nc-left { transform: rotateY(-90deg) translateZ(69px); }
+.nc-top { transform: rotateX(90deg) translateZ(69px); }
+.nc-bottom { transform: rotateX(-90deg) translateZ(69px); }
+.nc-core-side {
+  border-left-color: #20d9ff35;
+}
+.nc-core-side h3 {
+  letter-spacing: 1.8px;
+}
+.nc-core-side p {
+  line-height: 1.8;
+}
+.nc-core-controls button {
+  transition: background .2s ease, border-color .2s ease;
+}
+.nc-core-controls button:hover {
+  border-color: var(--blue);
+  box-shadow: 0 0 16px #20d9ff17;
+}
+.memory-panel {
+  border-color: #7459b64d;
+  box-shadow: inset 0 1px #c4b5fd08, 0 12px 34px #0002;
+}
+.memory-stat, .memory-method {
+  background: linear-gradient(145deg, #15132a, #090e1b);
+  border-color: #8b5cf633;
+}
+.memory-latest {
+  background: #8b5cf60b;
+}
+#chart {
+  display: block;
+}
+hr {
+  opacity: .6;
+}
+footer {
+  border-top: 1px solid #1a3a524d;
+  letter-spacing: 1.5px;
+  line-height: 1.8;
+}
+@media (min-width: 1200px) {
+  .nc-core { padding: 22px 26px; }
+  .memory-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+}
+@media (max-width: 900px) {
+  .grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .nc-core-layout { grid-template-columns: minmax(0, 1fr) minmax(190px, .8fr); }
+  .nc-scene { height: 290px; }
+}
+@media (max-width: 650px) {
+  header { align-items: flex-start; }
+  .grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .nc-core-layout { grid-template-columns: 1fr; }
+  .nc-core-side {
+    border-left: 0;
+    border-top: 1px solid #1b3a50;
+    padding: 14px 0 0;
+  }
+  .nc-scene { height: 265px; }
+  .nc-core-controls button { flex: 1; }
+  .metric { font-size: 23px; }
+  .panel { padding: 13px; }
+}
+@media (max-width: 360px) {
+  .grid { grid-template-columns: 1fr; }
+}
+/* ===== END TEOS NEXUS 2.0 VISUAL LAYER ===== */
+
+</style>
+<style>
+
+/* TEOS CONTROL CENTER 2.0 — STRUCTURAL LAYER */
+:root {
+  --cc-bg: #040812;
+  --cc-panel: #091321;
+  --cc-border: #16364d;
+  --cc-cyan: #20d9ff;
+  --cc-green: #36ffc0;
+}
+body {
+  margin: 0;
+  background:
+    radial-gradient(ellipse at 58% 8%, #10314b45, transparent 46%),
+    #040812;
+}
+body::before { z-index: 0; }
+header, main { position: relative; z-index: 1; }
+header {
+  min-height: 66px;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  padding: 14px 24px;
+  border-bottom: 1px solid #1a536c;
+  background: #050b16ed;
+}
+header h1 { margin: 0 0 5px; }
+header .subtitle { font-size: 10px; }
+main {
+  max-width: none;
+  box-sizing: border-box;
+  padding: 18px;
+}
+.cc-layout {
+  display: grid;
+  grid-template-columns: 190px minmax(0, 1fr);
+  gap: 18px;
+  align-items: start;
+}
+.cc-sidebar {
+  position: sticky;
+  top: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  padding: 15px 10px;
+  border: 1px solid var(--cc-border);
+  border-radius: 10px;
+  background: linear-gradient(180deg,#0a1727f5,#060c17f5);
+}
+.cc-brand {
+  padding: 7px 8px 17px;
+  margin-bottom: 7px;
+  border-bottom: 1px solid #1b3a50;
+  color: var(--cc-cyan);
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 2px;
+}
+.cc-sidebar a {
+  display: block;
+  padding: 11px 9px;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  color: #9bb3c9;
+  font-size: 11px;
+  text-decoration: none;
+  letter-spacing: .35px;
+}
+.cc-sidebar a:hover, .cc-sidebar a:focus-visible {
+  color: #e7faff;
+  border-color: #20d9ff55;
+  background: #20d9ff0d;
+  outline: none;
+}
+.cc-sidebar .cc-nav-caption {
+  margin: 13px 8px 3px;
+  color: #526f89;
+  font-size: 9px;
+  letter-spacing: 1.5px;
+}
+.cc-sidebar .cc-side-status {
+  margin-top: 18px;
+  padding: 12px 8px 3px;
+  border-top: 1px solid #1b3a50;
+  color: #7f9ab2;
+  font-size: 10px;
+  line-height: 1.8;
+}
+.cc-workspace { min-width: 0; }
+.cc-workspace > section { min-width: 0; }
+.cc-workspace > .grid {
+  margin-top: 0 !important;
+  margin-bottom: 14px;
+  gap: 12px;
+}
+.cc-hero-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.55fr) minmax(250px, .8fr);
+  align-items: stretch;
+  gap: 14px;
+  margin-bottom: 14px;
+}
+.cc-hero-grid > section { min-width: 0; margin-top: 0 !important; }
+.cc-hero-grid .nc-core { height: 100%; box-sizing: border-box; }
+.cc-hero-grid .nc-scene { min-height: 300px; }
+.cc-hero-grid > .cc-observation {
+  display: flex;
+  flex-direction: column;
+}
+.cc-observation #neuron {
+  width: 100%;
+  height: 270px;
+  flex: 1;
+}
+.cc-module-grid {
+  display: grid;
+  grid-template-columns: repeat(2,minmax(0,1fr));
+  align-items: start;
+  gap: 14px;
+  margin-bottom: 14px;
+}
+.cc-module-grid > section { min-width: 0; margin-top: 0 !important; }
+.cc-bottom-grid {
+  display: grid;
+  grid-template-columns: minmax(0,1.2fr) minmax(0,.8fr);
+  gap: 14px;
+  align-items: start;
+  margin-bottom: 12px;
+}
+.cc-bottom-grid > section { min-width: 0; margin-top: 0 !important; }
+.cc-bottom-grid > section > .panel { min-width: 0; }
+.cc-workspace .panel { border-radius: 9px; }
+.cc-workspace .section-title { letter-spacing: 1.4px; }
+.cc-workspace .memory-grid { grid-template-columns: repeat(2,minmax(0,1fr)); }
+.cc-workspace footer { margin-top: 8px; }
+.cc-workspace .nc-core-head { gap: 10px; }
+.cc-workspace .nc-core-side { overflow-wrap: anywhere; }
+@media (min-width: 1500px) {
+  .cc-layout { grid-template-columns: 205px minmax(0,1fr); }
+  .cc-hero-grid { grid-template-columns: minmax(0,1.65fr) minmax(290px,.8fr); }
+}
+@media (max-width: 1050px) {
+  .cc-layout { grid-template-columns: 145px minmax(0,1fr); gap: 12px; }
+  main { padding: 12px; }
+  .cc-hero-grid { grid-template-columns: minmax(0,1fr); }
+  .cc-hero-grid .nc-core { height: auto; }
+  .cc-observation #neuron { height: 210px; flex: initial; }
+}
+@media (max-width: 700px) {
+  header { padding: 12px; align-items: flex-start; }
+  .cc-layout { grid-template-columns: minmax(0,1fr); }
+  .cc-sidebar {
+    position: static;
+    display: grid;
+    grid-template-columns: repeat(3,minmax(0,1fr));
+    gap: 4px;
+    padding: 8px;
+  }
+  .cc-brand { grid-column: 1/-1; padding: 5px 6px 10px; }
+  .cc-sidebar a { padding: 9px 5px; text-align: center; }
+  .cc-sidebar .cc-nav-caption, .cc-sidebar .cc-side-status { display: none; }
+  .cc-module-grid, .cc-bottom-grid { grid-template-columns: minmax(0,1fr); }
+  .cc-workspace .memory-grid { grid-template-columns: repeat(2,minmax(0,1fr)); }
+  main { padding: 9px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .cc-sidebar a { transition: none !important; }
+}
+/* END TEOS CONTROL CENTER 2.0 — STRUCTURAL LAYER */
+
+</style>
+<style>
+
+/* TEOS CONTROL CENTER 2.0 — FINISHING LAYER */
+.cc-layout { align-items: stretch; }
+.cc-sidebar { min-height: 470px; }
+.cc-workspace { display: flex; flex-direction: column; gap: 14px; }
+.cc-workspace > .grid,
+.cc-workspace > .cc-hero-grid,
+.cc-workspace > .cc-module-grid,
+.cc-workspace > .cc-bottom-grid { margin: 0 !important; }
+
+.cc-workspace > .grid { gap: 12px; }
+.cc-workspace .panel {
+  background-color: #081321;
+  border-color: #193b52;
+  box-shadow: inset 0 1px #b9edff08, 0 10px 28px #0003;
+}
+.cc-workspace .panel:hover { border-color: #26708b; }
+
+.cc-hero-grid {
+  grid-template-columns: minmax(0, 1.35fr) minmax(270px, .85fr);
+  align-items: stretch;
+}
+.cc-hero-grid .nc-core {
+  height: auto;
+  min-height: 0;
+}
+.cc-hero-grid .nc-core-layout {
+  grid-template-columns: minmax(0, 1.1fr) minmax(200px, .9fr);
+  align-items: center;
+  gap: 12px;
+}
+.cc-hero-grid .nc-scene {
+  height: 275px;
+  min-height: 275px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+.cc-hero-grid .nc-scene::before {
+  width: 205px;
+  height: 205px;
+}
+.cc-hero-grid .nc-cube {
+  width: 118px;
+  height: 118px;
+}
+.cc-hero-grid .nc-front { transform: translateZ(59px); }
+.cc-hero-grid .nc-back { transform: rotateY(180deg) translateZ(59px); }
+.cc-hero-grid .nc-right { transform: rotateY(90deg) translateZ(59px); }
+.cc-hero-grid .nc-left { transform: rotateY(-90deg) translateZ(59px); }
+.cc-hero-grid .nc-top { transform: rotateX(90deg) translateZ(59px); }
+.cc-hero-grid .nc-bottom { transform: rotateX(-90deg) translateZ(59px); }
+
+.cc-module-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.cc-bottom-grid { grid-template-columns: minmax(0, 1.15fr) minmax(0, .85fr); }
+.cc-workspace .memory-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+.cc-workspace .memory-stat { min-width: 0; }
+.cc-workspace .metric,
+.cc-workspace .small { overflow-wrap: anywhere; }
+.cc-workspace footer { margin-top: 0; }
+
+@media (max-width: 1150px) {
+  .cc-hero-grid { grid-template-columns: minmax(0, 1fr); }
+  .cc-hero-grid .nc-core-layout {
+    grid-template-columns: minmax(0, 1.1fr) minmax(200px, .9fr);
+  }
+  .cc-hero-grid .nc-scene { height: 260px; min-height: 260px; }
+}
+@media (max-width: 700px) {
+  .cc-workspace { gap: 10px; }
+  .cc-module-grid, .cc-bottom-grid { grid-template-columns: minmax(0, 1fr); }
+  .cc-hero-grid .nc-core-layout { grid-template-columns: minmax(0, 1fr); }
+  .cc-hero-grid .nc-core-side {
+    border-left: 0;
+    border-top: 1px solid #1b3a50;
+    padding: 14px 0 0;
+  }
+}
+/* END TEOS CONTROL CENTER 2.0 — FINISHING LAYER */
+
+</style>
+
+<style>
+/* TEOS RESPONSIVE LAYER — MOBILE TABLET DESKTOP */
+*, *::before, *::after { box-sizing: border-box; }
+html { width: 100%; min-height: 100%; }
+body { width: 100%; min-width: 0; overflow-x: hidden; }
+header, main, .cc-layout, .cc-workspace,
+.cc-hero-grid, .cc-module-grid, .cc-bottom-grid {
+  min-width: 0;
+  max-width: 100%;
+}
+.cc-layout { width: 100%; }
+.cc-sidebar { min-width: 0; }
+.cc-sidebar a { overflow-wrap: anywhere; }
+.cc-workspace > *,
+.cc-workspace section,
+.cc-workspace .panel { min-width: 0; max-width: 100%; }
+.cc-workspace .grid {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+.cc-workspace .memory-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+.cc-workspace canvas {
+  display: block;
+  max-width: 100%;
+}
+.cc-workspace .nc-core-layout { min-width: 0; }
+.cc-workspace .nc-core-side { min-width: 0; overflow-wrap: anywhere; }
+.cc-workspace .metric { overflow-wrap: anywhere; }
+.cc-workspace .memory-methods,
+.cc-workspace .memory-recent { min-width: 0; overflow-wrap: anywhere; }
+.cc-workspace button { max-width: 100%; }
+
+@media (max-width: 1100px) {
+  .cc-layout {
+    grid-template-columns: 150px minmax(0, 1fr);
+    gap: 12px;
+  }
+  main { padding: 12px; }
+  .cc-workspace .grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .cc-hero-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .cc-hero-grid .nc-core { height: auto; }
+  .cc-hero-grid .nc-core-layout {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  }
+}
+
+@media (max-width: 700px) {
+  header {
+    padding: 13px 12px;
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 8px;
+  }
+  header h1 { font-size: clamp(18px, 5vw, 25px); }
+  header .subtitle {
+    font-size: 9px;
+    line-height: 1.5;
+    overflow-wrap: anywhere;
+  }
+  header .status { font-size: 10px; }
+  main { padding: 9px; }
+
+  .cc-layout {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 10px;
+  }
+  .cc-sidebar {
+    position: static;
+    min-height: 0;
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 5px;
+    padding: 8px;
+  }
+  .cc-brand {
+    grid-column: 1 / -1;
+    margin: 0;
+    padding: 7px 5px 10px;
+    font-size: 10px;
+  }
+  .cc-sidebar a {
+    min-width: 0;
+    padding: 9px 4px;
+    text-align: center;
+    font-size: 10px;
+    line-height: 1.4;
+  }
+  .cc-sidebar .cc-nav-caption,
+  .cc-sidebar .cc-side-status { display: none; }
+
+  .cc-workspace { gap: 10px; }
+  .cc-workspace .grid,
+  .cc-module-grid,
+  .cc-bottom-grid {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 10px;
+  }
+  .cc-workspace > .grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .cc-hero-grid { grid-template-columns: minmax(0, 1fr); }
+  .cc-hero-grid .nc-core-layout {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 10px;
+  }
+  .cc-hero-grid .nc-scene {
+    width: 100%;
+    height: 235px;
+    min-height: 235px;
+  }
+  .cc-hero-grid .nc-cube {
+    transform-origin: center center;
+  }
+  .cc-hero-grid .nc-core-side {
+    border-left: 0;
+    border-top: 1px solid #1b3a50;
+    padding: 12px 0 0;
+  }
+  .cc-workspace .panel { padding: 13px; }
+  .cc-workspace .section-title {
+    font-size: 12px;
+    line-height: 1.5;
+    overflow-wrap: anywhere;
+  }
+  .cc-workspace .metric { font-size: clamp(20px, 6vw, 30px); }
+  .cc-workspace .memory-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 7px;
+  }
+  .cc-workspace .memory-stat { padding: 9px; }
+  .cc-workspace .metric-label { font-size: 9px; line-height: 1.5; }
+  .cc-workspace .small { font-size: 11px; line-height: 1.5; }
+  .cc-workspace .nc-core-controls { display: flex; flex-wrap: wrap; }
+  .cc-workspace .nc-core-controls button {
+    flex: 1 1 130px;
+    min-height: 40px;
+  }
+  .cc-workspace canvas { width: 100%; }
+}
+
+@media (max-width: 380px) {
+  .cc-sidebar { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .cc-workspace .memory-grid { grid-template-columns: minmax(0, 1fr); }
+  .cc-workspace .grid { gap: 7px; }
+  .cc-workspace .panel { padding: 10px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cc-sidebar *, .cc-workspace * {
+    scroll-behavior: auto !important;
+  }
+}
+/* END TEOS RESPONSIVE LAYER */
+</style>
+
+
+<style>
+/* TEOS CENTER RETRO V1 — VISUAL ONLY */
+:root {
+  color-scheme: dark;
+  --bg: #080d0a;
+  --panel: #0c1510;
+  --blue: #62e8ff;
+  --green: #a6ff8f;
+  --red: #ff796b;
+  --text: #d9f4d7;
+  --muted: #91a995;
+  --violet: #e4b66b;
+  --retro-border: #345a43;
+  --retro-amber: #ffc66d;
+}
+html {
+  background: var(--bg);
+  scroll-behavior: smooth;
+}
+body {
+  min-width: 0;
+  width: 100%;
+  overflow-x: clip;
+  color: var(--text);
+  background-color: var(--bg);
+  background-image:
+    linear-gradient(#a6ff8f08 1px, transparent 1px),
+    linear-gradient(90deg, #a6ff8f08 1px, transparent 1px);
+  background-size: 24px 24px;
+  font-family: "Cascadia Mono", "Consolas", "Courier New", monospace;
+  font-size: 13px;
+}
+header {
+  position: relative;
+  gap: 14px;
+  padding: clamp(14px, 2.5vw, 28px);
+  background: #080d0af2;
+  border-bottom: 2px solid var(--green);
+  box-shadow: 0 5px 22px #0008;
+}
+header h1 {
+  font-size: clamp(18px, 2.3vw, 27px);
+  letter-spacing: clamp(1px, .3vw, 4px);
+  line-height: 1.4;
+}
+h1 span { color: var(--green); }
+.subtitle {
+  color: var(--muted);
+  font-size: 11px;
+  letter-spacing: .08em;
+  line-height: 1.7;
+}
+.status {
+  color: var(--green);
+  overflow-wrap: anywhere;
+}
+main {
+  width: 100%;
+  max-width: 1600px;
+  margin-inline: auto;
+  padding: clamp(10px, 2vw, 24px);
+}
+.panel,
+.memory-stat,
+.memory-method,
+.memory-experience {
+  min-width: 0;
+  border: 1px solid var(--retro-border);
+  border-radius: 3px;
+  background: linear-gradient(145deg, #101b13f5, #080e0bf5);
+  box-shadow: inset 0 0 0 1px #a6ff8f08, 0 5px 18px #0005;
+}
+.panel {
+  position: relative;
+  padding: clamp(12px, 1.5vw, 20px);
+}
+.metric-label,
+.section-title {
+  color: var(--retro-amber);
+  font-family: inherit;
+  letter-spacing: .12em;
+  line-height: 1.6;
+}
+.metric-label { font-size: 10px; }
+.section-title { font-size: 12px; }
+.metric {
+  max-width: 100%;
+  overflow-wrap: anywhere;
+  font-family: "Cascadia Mono", Consolas, monospace;
+  font-variant-numeric: tabular-nums;
+}
+.blue { color: var(--blue); text-shadow: 0 0 10px #62e8ff25; }
+.green { color: var(--green); text-shadow: 0 0 10px #a6ff8f25; }
+.red { color: var(--red); }
+.small,
+.memory-method p,
+.memory-recent p {
+  color: var(--muted);
+  line-height: 1.65;
+  overflow-wrap: anywhere;
+}
+.memory-panel { border-color: #88704a; }
+.memory-tag,
+.memory-accent { color: var(--retro-amber); }
+.memory-stat,
+.memory-method { border-radius: 2px; }
+.memory-latest {
+  border-left: 3px solid var(--retro-amber);
+  background: #ffc66d0a;
+  padding: 12px;
+  overflow-wrap: anywhere;
+}
+button,
+input,
+select,
+textarea {
+  max-width: 100%;
+  font: inherit;
+}
+button {
+  min-height: 38px;
+  color: var(--green);
+  background: #0b160f;
+  border: 1px solid var(--retro-border);
+  border-radius: 2px;
+}
+button:hover {
+  background: #183020;
+  border-color: var(--green);
+}
+a { color: var(--blue); }
+canvas {
+  display: block;
+  max-width: 100%;
+}
+#neuron {
+  width: 100%;
+  height: clamp(180px, 28vw, 300px);
+}
+/* Retirar el cubo antiguo sin tocar la neurona ni la gráfica */
+.nc-cube,
+.nc-face,
+.cc-hero-grid .nc-cube {
+  display: none !important;
+}
+.nc-scene {
+  min-width: 0;
+  min-height: 170px;
+  height: clamp(170px, 25vw, 260px);
+  perspective: none;
+  overflow: hidden;
+}
+.nc-scene::before {
+  width: min(190px, 60vw);
+  height: min(190px, 60vw);
+  border-color: #a6ff8f65;
+  border-radius: 50%;
+  box-shadow: 0 0 24px #a6ff8f13, inset 0 0 24px #a6ff8f10;
+}
+.nc-scene::after {
+  content: "NEURONA / SIGNAL READY";
+  position: relative;
+  z-index: 1;
+  color: var(--green);
+  font: 11px "Cascadia Mono", Consolas, monospace;
+  letter-spacing: .12em;
+  text-align: center;
+  overflow-wrap: anywhere;
+}
+.nc-core-side { border-color: var(--retro-border); }
+.nc-core-side h3 { color: var(--retro-amber); }
+.cc-sidebar {
+  background: #080d0af5;
+  border-color: var(--retro-border);
+}
+.cc-sidebar a {
+  border-radius: 2px;
+  overflow-wrap: anywhere;
+}
+.cc-sidebar a:hover,
+.cc-sidebar a.active {
+  color: var(--green);
+  background: #a6ff8f10;
+}
+.cc-brand { color: var(--retro-amber); }
+.cc-layout,
+.cc-workspace,
+.cc-hero-grid,
+.cc-module-grid,
+.cc-bottom-grid {
+  min-width: 0;
+  max-width: 100%;
+}
+.cc-workspace > *,
+.cc-workspace section { min-width: 0; }
+footer {
+  color: var(--muted);
+  border-top: 1px solid var(--retro-border);
+  line-height: 1.8;
+}
+@media (min-width: 1500px) {
+  main { padding: 28px; }
+  .cc-workspace { gap: 18px; }
+}
+@media (max-width: 1100px) {
+  .cc-layout {
+    grid-template-columns: 145px minmax(0, 1fr);
+    gap: 10px;
+  }
+  .cc-workspace .grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+@media (max-width: 700px) {
+  header { padding: 14px; }
+  main { padding: 9px; }
+  .cc-layout { grid-template-columns: minmax(0, 1fr); }
+  .cc-sidebar {
+    position: static;
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 5px;
+    padding: 8px;
+  }
+  .cc-sidebar .cc-nav-caption,
+  .cc-sidebar .cc-side-status { display: none; }
+  .cc-workspace .grid,
+  .cc-module-grid,
+  .cc-bottom-grid,
+  .cc-hero-grid,
+  .cc-hero-grid .nc-core-layout {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .cc-workspace > .grid,
+  .cc-workspace .memory-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .cc-workspace .panel { padding: 12px; }
+  .cc-workspace .metric { font-size: clamp(19px, 5vw, 28px); }
+  .cc-core-controls button { flex: 1 1 125px; }
+}
+@media (max-width: 380px) {
+  .cc-sidebar { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .cc-workspace > .grid,
+  .cc-workspace .memory-grid { grid-template-columns: minmax(0, 1fr); }
+  .metric { overflow-wrap: anywhere; }
+}
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  *, *::before, *::after { animation-duration: .01ms !important; }
+}
+/* FIN TEOS CENTER RETRO V1 */
+</style>
+
+
+<style>
+/* TEOS NEXUS — BLUE NEURON THEME */
+:root {
+  --bg:#050b18; --panel:#0a1729; --text:#e2f3ff;
+  --muted:#8ba9c5; --green:#40eaff; --blue:#69aaff;
+  --retro-border:#20496b; --retro-amber:#76dcff;
+  --cc-bg:#050b18; --cc-panel:#0a1729; --cc-border:#20496b;
+  --cc-cyan:#40eaff; --cc-green:#40eaff;
+}
+html { background:#050b18; color-scheme:dark; }
+body {
+  color:#e2f3ff;
+  background:radial-gradient(ellipse at 50% 8%,#12385b88,transparent 48%),#050b18;
+  font-family:Inter,"Segoe UI",Arial,sans-serif;
+}
+header {
+  background:linear-gradient(100deg,#071426,#0b1c32);
+  border-bottom:1px solid #28769b;
+  box-shadow:0 8px 32px #0007;
+}
+header h1 { color:#edfaff; }
+header h1 span,.cc-brand,.status { color:#40eaff !important; }
+.subtitle { color:#8eacc9; }
+.cc-sidebar {
+  background:linear-gradient(180deg,#0b1b30,#071121);
+  border:1px solid #20496b; border-radius:14px;
+}
+.cc-sidebar a { color:#a8c2db; border-radius:8px; }
+.cc-sidebar a:hover,.cc-sidebar a.active {
+  color:#e8fcff; border-color:#40eaff66; background:#40eaff12;
+}
+.cc-workspace .panel,.cc-workspace .memory-stat,
+.cc-workspace .memory-method,.cc-workspace .memory-experience {
+  background:linear-gradient(145deg,#0d2035,#081426);
+  border:1px solid #20496b; border-radius:12px;
+  box-shadow:0 8px 26px #0003;
+}
+.cc-workspace .section-title,.cc-workspace .metric-label,
+.cc-workspace .memory-tag,.cc-workspace .memory-accent,
+.cc-workspace .nc-core-side h3 { color:#73e8ff; }
+.cc-workspace .memory-latest {
+  border-left-color:#40eaff; background:#40eaff09;
+}
+.cc-workspace .nc-scene::before {
+  border-color:#40eaff65; box-shadow:0 0 30px #40eaff1a;
+}
+.cc-workspace .nc-scene::after { color:#40eaff; }
+.cc-workspace #neuron {
+  display:block; width:100%; height:clamp(230px,30vw,390px);
+}
+.cc-workspace button {
+  color:#a9f5ff; background:#0a2035; border:1px solid #286185;
+  border-radius:8px;
+}
+.cc-workspace button:hover { background:#10314b; border-color:#40eaff; }
+#anomaly-fluctuations-panel { width:100%; box-sizing:border-box; }
+#anomaly-fluctuations-chart { max-width:100%; }
+@media(min-width:1400px) {
+  .cc-layout { grid-template-columns:205px minmax(0,1fr); }
+  .cc-hero-grid { grid-template-columns:minmax(0,1fr); }
+}
+@media(max-width:900px) {
+  .cc-layout { grid-template-columns:135px minmax(0,1fr); gap:10px; }
+  .cc-module-grid,.cc-bottom-grid { grid-template-columns:minmax(0,1fr); }
+}
+@media(max-width:650px) {
+  header { flex-direction:column; align-items:flex-start; padding:14px; }
+  main { padding:10px; }
+  .cc-layout { grid-template-columns:minmax(0,1fr); }
+  .cc-sidebar {
+    position:static; display:grid; grid-template-columns:repeat(3,minmax(0,1fr));
+    gap:6px; padding:8px;
+  }
+  .cc-brand { grid-column:1/-1; padding:5px 6px 10px; margin:0; }
+  .cc-sidebar .cc-nav-caption,.cc-sidebar .cc-side-status { display:none; }
+  .cc-sidebar a { padding:8px 4px; text-align:center; font-size:10px; }
+  .cc-hero-grid,.cc-module-grid,.cc-bottom-grid { grid-template-columns:minmax(0,1fr); }
+  .cc-workspace .grid,.cc-workspace .memory-grid {
+    grid-template-columns:repeat(2,minmax(0,1fr));
+  }
+  .cc-workspace #neuron { height:270px; }
+}
+@media(max-width:380px) {
+  .cc-sidebar { grid-template-columns:repeat(2,minmax(0,1fr)); }
+  .cc-workspace .grid,.cc-workspace .memory-grid {
+    grid-template-columns:minmax(0,1fr);
+  }
+}
+@media(prefers-reduced-motion:reduce) {
+  *,*::before,*::after { animation-duration:.01ms!important; transition-duration:.01ms!important; }
+}
+/* FIN TEOS NEXUS — BLUE NEURON THEME */
+</style>
+
+
+<style>
+
+/* TEOS NEURONA NEXUS — corrección visual segura */
+#neuron {
+  display: block;
+  width: 100%;
+  max-width: 100%;
+}
+#teos-neuron-anomaly-overlay {
+  position: absolute !important;
+  pointer-events: none !important;
+  z-index: 50 !important;
+  overflow: visible !important;
+}
+#teos-neuron-anomaly-status {
+  position: relative;
+  z-index: 51;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px;
+  margin: 8px auto;
+  font: 600 12px/1.5 system-ui, sans-serif;
+}
+.teos-anomaly-tag {
+  color: #ff0000 !important;
+  border: 1px solid #ff0000;
+  border-radius: 8px;
+  padding: 5px 9px;
+  background: rgba(30, 0, 0, .8);
+  text-shadow: 0 0 8px #ff0000;
+}
+.teos-red-pulse {
+  fill: none;
+  stroke: #ff0000;
+  stroke-width: 3;
+  filter: drop-shadow(0 0 7px #ff0000);
+}
+.teos-red-dot {
+  fill: #ff0000;
+  filter: drop-shadow(0 0 8px #ff0000);
+}
+.teos-red-label {
+  fill: #ff0000;
+  font: bold 10px system-ui, sans-serif;
+  text-anchor: middle;
+}
+@media (max-width: 600px) {
+  #neuron { height: 240px; }
+  #teos-neuron-anomaly-status { font-size: 11px; }
+}
+
+</style>
+
+<style id="teos-neuron-services-style">
+.teos-neuron-services-row {
+  display:grid!important;
+  grid-template-columns:minmax(0,1.45fr) minmax(245px,.85fr);
+  gap:14px; align-items:stretch; width:100%; min-width:0; margin-top:12px;
+}
+.teos-neuron-services-row #neuron {
+  display:block; width:100%!important; max-width:100%; min-width:0;
+}
+#teos-active-services {
+  min-width:0; box-sizing:border-box; padding:16px;
+  color:#e6f5ff; background:linear-gradient(145deg,#071a31,#0b2744);
+  border:1px solid rgba(55,200,255,.36); border-radius:14px;
+  box-shadow:0 0 24px rgba(0,166,255,.08);
+}
+.teos-services-head {display:flex; flex-wrap:wrap; gap:8px; justify-content:space-between;
+  align-items:center; margin-bottom:14px}
+.teos-services-head strong {font-size:.9rem; letter-spacing:.07em}
+#teos-services-updated {font-size:.72rem; color:#8bb4ce}
+.teos-service-item {display:grid; grid-template-columns:10px minmax(0,1fr) auto;
+  gap:10px; align-items:center; padding:11px 0; border-top:1px solid rgba(135,190,220,.15)}
+.teos-service-led {width:8px;height:8px;border-radius:50%;background:#8193a4}
+.teos-service-led.active {background:#32d583;box-shadow:0 0 10px #32d583}
+.teos-service-led.inactive {background:#ff657a;box-shadow:0 0 8px rgba(255,101,122,.5)}
+.teos-service-led.warning {background:#f6c85f}
+.teos-service-copy {min-width:0}
+.teos-service-copy strong {display:block;font-size:.82rem}
+.teos-service-copy small {display:block;margin-top:4px;color:#8eafc8;
+  font-size:.68rem;overflow-wrap:anywhere}
+.teos-service-state {font-size:.68rem;font-weight:700;color:#a9bdce;text-align:right}
+.teos-service-state.active {color:#32d583}
+.teos-service-state.inactive,.teos-service-state.warning {color:#ffb4bd}
+.teos-services-foot {margin-top:12px;color:#8bb4ce;font-size:.7rem}
+@media(max-width:700px) {
+  .teos-neuron-services-row {grid-template-columns:minmax(0,1fr)}
+  #teos-active-services {padding:12px}
+}
+</style>
+
+</head>
+<body>
+<header>
+  <div>
+    <h1>TEOS <span>NEURONA</span> NEXUS</h1>
+    <div class="subtitle">NEURAL OPERATIONS CENTER · SISTEMAS DE COMPUTACIÓN DISTRIBUIDA</div>
+  </div>
+  <div class="status" id="connection">● INICIANDO SISTEMA</div>
+</header>
+<main>
+  <section class="grid">
+    <div class="panel">
+      <div class="metric-label">HASHRATE ACTUAL</div>
+      <div class="metric blue" id="hashrate">--</div>
+      <div class="small">GH/s · Bitaxe</div>
+    </div>
+    <div class="panel">
+      <div class="metric-label">TEMPERATURA ASIC</div>
+      <div class="metric green" id="asic">--</div>
+      <div class="small">Grados Celsius</div>
+    </div>
+    <div class="panel">
+      <div class="metric-label">TEMPERATURA VR</div>
+      <div class="metric red" id="vr">--</div>
+      <div class="small">Regulador de voltaje</div>
+    </div>
+    <div class="panel">
+      <div class="metric-label">FRECUENCIA</div>
+      <div class="metric blue" id="frequency">--</div>
+      <div class="small">MHz</div>
+    </div>
+  </section>
+  <section class="panel" style="margin-top:16px">
+    <h2 class="section-title">NEURONA · RED DE OBSERVACIÓN</h2>
+    <canvas id="neuron"></canvas>
+  </section>
+  
+<section class="panel memory-panel" aria-labelledby="experience-title">
+  <div class="memory-heading">
+    <h2 class="section-title" id="experience-title">NEURONA EXPERIENCE MEMORY</h2>
+    <span class="memory-tag">● MEMORIA V2 · <span id="experience-status">CONECTANDO</span></span>
+  </div>
+  <p class="small">Experiencias enlazadas a predicciones y resultados reales. Registros originales intactos; consulta de solo lectura.</p>
+  <div class="memory-grid">
+    <div class="memory-stat"><div class="metric-label">PREDICCIONES REGISTRADAS</div><div class="metric memory-accent" id="experience-total">--</div><div class="small">IDs únicos</div></div>
+    <div class="memory-stat"><div class="metric-label">EXPERIENCIAS EVALUADAS</div><div class="metric memory-accent" id="experience-evaluated">--</div><div class="small">Predicción enlazada a resultado</div></div>
+    <div class="memory-stat"><div class="metric-label">PENDIENTES</div><div class="metric memory-accent" id="experience-pending">--</div><div class="small">Esperando resultado real</div></div>
+    <div class="memory-stat"><div class="metric-label">MENOR MAE OBSERVADO</div><div class="metric memory-accent" id="experience-best">--</div><div class="small" id="experience-best-detail">Comparación histórica V2</div></div>
+  </div>
+  <h3 class="section-title" style="margin-top:20px">MÉTRICAS POR MÉTODO</h3>
+  <div id="experience-methods" class="memory-methods"><p class="small">Esperando métricas de la API...</p></div>
+  <div class="memory-latest">
+    <div class="metric-label">ÚLTIMA EXPERIENCIA REGISTRADA</div>
+    <p id="experience-latest" class="small">Esperando resultado enlazado...</p>
+    <p id="experience-pending-detail" class="small"></p>
+  </div>
+  <h3 class="section-title" style="margin-top:20px">REGISTRO RECIENTE DE EXPERIENCIAS</h3>
+  <div id="experience-recent" class="memory-recent"><p class="small">Esperando experiencias...</p></div>
+  <p class="nc-core-note">MAE: error absoluto medio. RMSE: penaliza más los errores grandes. Esta memoria registra resultados; por sí sola no demuestra aprendizaje adaptativo ni predice bloques de Bitcoin.</p>
+</section>
+
+<section class="panel memory-panel" aria-labelledby="trend-title">
+  <div class="memory-heading">
+    <h2 class="section-title" id="trend-title">NEURONA TREND &amp; ADAPTATION</h2>
+    <span class="memory-tag">● MEMORIA HISTÓRICA · <span id="trend-status">CARGANDO</span></span>
+  </div>
+  <p class="small">Evaluación retrospectiva de tendencias y métodos. Consulta de solo lectura; no cambia el predictor de producción.</p>
+  <div class="memory-grid">
+    <div class="memory-stat"><div class="metric-label">CAPTURAS ANALIZADAS</div><div class="metric memory-accent" id="trend-captures">--</div><div class="small">Muestras históricas de Bitaxe</div></div>
+    <div class="memory-stat"><div class="metric-label">RESULTADOS ENLAZADOS</div><div class="metric memory-accent" id="trend-outcomes">--</div><div class="small">Evaluaciones históricas</div></div>
+    <div class="memory-stat"><div class="metric-label">MAE REFERENCIA 1H</div><div class="metric memory-accent" id="trend-baseline">--</div><div class="small">Error absoluto medio, GH/s</div></div>
+    <div class="memory-stat"><div class="metric-label">MAE EXPERIMENTO</div><div class="metric memory-accent" id="trend-adaptive">--</div><div class="small" id="trend-adaptive-detail">Experimento retrospectivo</div></div>
+  </div>
+  <h3 class="section-title" style="margin-top:20px">RANKING HISTÓRICO POR MAE</h3>
+  <div id="trend-methods" class="memory-methods"><p class="small">Esperando informes...</p></div>
+  <div class="memory-latest">
+    <div class="metric-label">RESULTADO DE ADAPTACIÓN CONTROLADA</div>
+    <p id="trend-comparison" class="small">Esperando comparación...</p>
+    <p id="trend-warning" class="small"></p>
+  </div>
+  <p class="nc-core-note">Un MAE histórico menor describe mejor desempeño en esos datos, no garantiza resultados futuros ni demuestra causalidad. El experimento no altera producción.</p>
+</section>
+
+<section class="grid" style="margin-top:16px">
+    <div class="panel">
+      <h2 class="section-title">ACTIVIDAD DE MINERÍA</h2>
+      <canvas id="chart" style="width:100%;height:190px"></canvas>
+      <div class="small" id="sampleInfo">Esperando datos...</div>
+    </div>
+    <div class="panel">
+      <h2 class="section-title">ANÁLISIS NEURONAL</h2>
+      <div class="metric green" id="thermal">--</div>
+      <div class="small">Estado térmico reportado</div>
+      <hr style="border-color:#1b3a50;margin:18px 0">
+      <div class="metric blue" id="accepted">--</div>
+      <div class="small">Shares aceptadas</div>
+      <div class="metric red" id="rejected">--</div>
+      <div class="small">Shares rechazadas</div>
+    </div>
+  </section>
+  <section class="panel" style="margin-top:16px">
+    <h2 class="section-title">PREDICCIÓN EXPERIMENTAL</h2>
+    <div id="prediction">Analizando disponibilidad de datos...</div>
+    <p class="small">Las estimaciones son experimentales y no garantizan resultados futuros de minería.</p>
+  </section>
+  
+<section class="panel" id="audit-reader-panel" style="margin-top:16px">
+  <h2 class="section-title">AUDITORÍA GENERAL · TEOS NEURONA NEXUS</h2>
+  <div id="audit-reader-status" class="small">Consultando resultados documentados...</div>
+  <div id="audit-reader-content"></div>
+</section>
+
+<section class="panel" id="anomaly-fluctuations-panel"
+         style="margin-top:16px" aria-labelledby="anomaly-fluctuations-title">
+  <div class="memory-heading">
+    <h2 class="section-title" id="anomaly-fluctuations-title">
+      NEURONA · FLUCTUACIONES Y ANOMALÍAS
+    </h2>
+    <span class="memory-tag">● HISTORIAL · <span id="anomaly-panel-status">CARGANDO</span></span>
+  </div>
+  <p class="small">
+    Eventos persistidos por el detector contextual. Escala logarítmica para
+    comparar picos extremos con sus referencias sin ocultar las diferencias.
+    Consulta de solo lectura.
+  </p>
+  <div class="memory-grid">
+    <div class="memory-stat">
+      <div class="metric-label">EVENTOS REGISTRADOS</div>
+      <div class="metric memory-accent" id="anomaly-count">0</div>
+    </div>
+    <div class="memory-stat">
+      <div class="metric-label">SIN VERIFICAR</div>
+      <div class="metric memory-accent" id="anomaly-unverified">0</div>
+    </div>
+    <div class="memory-stat">
+      <div class="metric-label">ÚLTIMO VALOR OBSERVADO</div>
+      <div class="metric memory-accent" id="anomaly-last-value">--</div>
+      <div class="small">GH/s</div>
+    </div>
+  </div>
+  <div style="margin-top:18px">
+    <canvas id="anomaly-fluctuations-chart"
+            role="img"
+            aria-label="Gráfico temporal de anomalías y referencias en GH/s"
+            style="display:block;width:100%;height:260px"></canvas>
+  </div>
+  <div class="small" style="display:flex;gap:14px;flex-wrap:wrap;margin-top:8px">
+    <span style="color:#ff657a">● Valor observado</span>
+    <span style="color:#00c8ff">● Mediana de referencia</span>
+    <span style="color:#f6c85f">● Referencia de una hora</span>
+  </div>
+  <h3 class="section-title" style="margin-top:20px">REGISTRO DE EVENTOS</h3>
+  <div id="anomaly-event-list" class="memory-recent" aria-live="polite">
+    <p class="small">Cargando historial...</p>
+  </div>
+  <p class="nc-core-note">
+    Una anomalía estadística no confirma por sí sola una falla física ni un
+    aumento real de capacidad. Los eventos conservan su estado de verificación.
+  </p>
+</section>
+
+<footer class="small" style="padding:24px 0;text-align:center">
+    TEOS · OPTIMIZAR. DISTRIBUIR. EVOLUCIONAR.
+    <div id="updated" style="margin-top:8px">Actualización pendiente</div>
+  </footer>
+</main>
+<script>
+const $ = id => document.getElementById(id);
+const number = (v, digits=1) =>
+  Number.isFinite(Number(v)) ? Number(v).toLocaleString('es-EC',
+    {maximumFractionDigits:digits}) : '--';
+
+
+
+
+
+async function loadAuditReader() {
+  const status = $("audit-reader-status");
+  const content = $("audit-reader-content");
+  if (!status || !content) return;
+
+  try {
+    const response = await fetch("/api/audit/summary", {cache: "no-store"});
+    if (!response.ok) throw new Error("HTTP " + response.status);
+    const audit = await response.json();
+
+    status.textContent = `${audit.status} · ${audit.completed}/${audit.total} puntos · Solo lectura`;
+    content.replaceChildren();
+
+    for (const point of audit.points || []) {
+      const card = document.createElement("div");
+      card.className = "memory-stat";
+      card.style.marginTop = "12px";
+
+      const heading = document.createElement("h3");
+      heading.className = "section-title";
+      heading.textContent = `${point.id}. ${point.name} · ${point.status}`;
+      card.appendChild(heading);
+
+      const details = document.createElement("pre");
+      details.className = "small";
+      details.style.whiteSpace = "pre-wrap";
+      details.textContent = JSON.stringify(point, null, 2);
+      card.appendChild(details);
+      content.appendChild(card);
+    }
+
+    const note = document.createElement("p");
+    note.className = "small";
+    note.textContent = audit.note || audit.source || "";
+    content.appendChild(note);
+  } catch (error) {
+    status.textContent = "No se pudo cargar la auditoría: " + error.message;
+  }
+}
+
+let lastLearningPredictionId = null;
+let learningInitialized = false;
+let learningFlashUntil = 0;
+let learningUpdateCount = 0;
+
+async function refresh() {
+  try {
+    const response = await fetch('/api/status', {cache:'no-store'});
+    if (!response.ok) throw new Error('HTTP '+response.status);
+    const data = await response.json();
+
+    const online = data.online_learning || {};
+    const update = online.last_update;
+    const predictionId = update && update.prediction_id;
+    learningUpdateCount = Number(online.updates) || 0;
+
+    if (!learningInitialized) {
+      lastLearningPredictionId = predictionId || null;
+      learningInitialized = true;
+    } else if (predictionId && predictionId !== lastLearningPredictionId) {
+      lastLearningPredictionId = predictionId;
+      learningFlashUntil = performance.now() + 8000;
+    }
+    // El formato exacto de los datos se verificará con la respuesta real.
+    window.teosData = data;
+    $('connection').textContent = '● API CONECTADA';
+    $('connection').style.color = 'var(--green)';
+    $('updated').textContent = 'Última consulta: ' +
+      new Date().toLocaleTimeString('es-EC');
+    renderData(data);
+  } catch (err) {
+    $('connection').textContent = '● API SIN CONEXIÓN';
+    $('connection').style.color = 'var(--red)';
+    const coreState = document.getElementById('nc-core-state');
+    if (coreState) coreState.textContent = 'API sin conexión';
+    $('sampleInfo').textContent = 'No se pudo consultar /api/status.';
+  }
+}
+
+
+function updateCoreTelemetry(latest, data) {
+  const get = id => document.getElementById(id);
+  const numeric = value =>
+    value !== null &&
+    value !== undefined &&
+    value !== '' &&
+    Number.isFinite(Number(value)) &&
+    Number(value) >= 0;
+
+  const put = (id, value) => {
+    const element = get(id);
+    if (element) element.textContent = value;
+  };
+
+  put('nc-value-hashrate',
+    numeric(latest.hashRate)
+      ? Number(latest.hashRate).toFixed(2) + ' GH/s'
+      : 'Sin dato');
+
+  put('nc-value-asic',
+    numeric(latest.temp)
+      ? Number(latest.temp).toFixed(1) + ' °C'
+      : 'Sin dato');
+
+  put('nc-value-vr',
+    numeric(latest.vrTemp)
+      ? Number(latest.vrTemp).toFixed(1) + ' °C'
+      : 'Sin dato');
+
+  put('nc-value-frequency',
+    numeric(latest.frequency)
+      ? Number(latest.frequency).toFixed(0) + ' MHz'
+      : 'Sin dato');
+
+  put('nc-value-accepted',
+    numeric(latest.sharesAccepted)
+      ? Number(latest.sharesAccepted).toLocaleString('es-EC')
+      : 'Sin dato');
+
+  put('nc-value-rejected',
+    numeric(latest.sharesRejected)
+      ? Number(latest.sharesRejected).toLocaleString('es-EC')
+      : 'Sin dato');
+
+  const state = get('nc-core-state');
+  if (!state) return;
+
+  if (!data.ok || !Object.keys(latest).length) {
+    state.textContent = 'Sin muestras disponibles';
+    return;
+  }
+
+  const age = Number(data.age_seconds);
+  if (data.age_seconds == null || !Number.isFinite(age) || age < 0) {
+    state.textContent = 'Datos recibidos · antigüedad desconocida';
+  } else if (age <= 30) {
+    state.textContent = 'Bitaxe · muestra de hace ' + Math.round(age) + ' s';
+  } else if (age <= 120) {
+    state.textContent = 'Última muestra hace ' + Math.round(age) + ' s';
+  } else {
+    state.textContent = 'Muestra antigua · ' + Math.round(age) + ' s';
+  }
+}
+
+
+function renderExperienceMemory(memory) {
+  const put = (id, value) => {
+    const el = $(id);
+    if (el) el.textContent = value;
+  };
+  const fmt = (value, digits=3) => {
+    if (value === null || value === undefined || value === '') return '--';
+    const n = Number(value);
+    return Number.isFinite(n) ? n.toLocaleString('es-EC', {maximumFractionDigits:digits}) : '--';
+  };
+  const labels = {
+    ultimo_hashrate:'Último hashrate',
+    referencia_10m:'Referencia 10 min',
+    referencia_1h:'Referencia 1 h',
+    media_ultimas_5:'Media últimas 5'
+  };
+  const label = method => labels[method] || method || 'Método desconocido';
+
+  put('experience-status', memory.status || 'SIN DATOS');
+  put('experience-total', fmt(memory.prediction_count, 0));
+  put('experience-evaluated', fmt(memory.evaluated_count, 0));
+  put('experience-pending', fmt(memory.pending_count, 0));
+  put('experience-best', label(memory.best_method));
+  put('experience-best-detail', memory.best_mae_GHs == null
+    ? 'Todavía no hay métricas válidas'
+    : 'MAE ' + fmt(memory.best_mae_GHs, 4) + ' GH/s · histórico observado');
+
+  const methodBox = $('experience-methods');
+  if (methodBox) {
+    methodBox.replaceChildren();
+    const methods = Array.isArray(memory.methods) ? memory.methods : [];
+    if (!methods.length) {
+      const empty = document.createElement('p');
+      empty.className = 'small';
+      empty.textContent = 'No hay métodos disponibles en la API.';
+      methodBox.appendChild(empty);
+    }
+    methods.forEach(method => {
+      const card = document.createElement('div');
+      card.className = 'memory-method';
+      const title = document.createElement('h3');
+      title.textContent = label(method.method);
+      card.appendChild(title);
+      [
+        'Evaluadas: ' + fmt(method.evaluated, 0) + ' · Pendientes: ' + fmt(method.pending, 0),
+        'MAE: ' + fmt(method.mae_GHs, 4) + ' GH/s',
+        'RMSE: ' + fmt(method.rmse_GHs, 4) + ' GH/s',
+        'Sesgo: ' + fmt(method.bias_GHs, 4) + ' GH/s',
+        'MAPE: ' + fmt(method.mape_pct, 4) + '%'
+      ].forEach(text => {
+        const p = document.createElement('p');
+        p.textContent = text;
+        card.appendChild(p);
+      });
+      methodBox.appendChild(card);
+    });
+  }
+
+  const latest = memory.latest_outcome;
+  put('experience-latest', latest
+    ? label(latest.method) + ' · predicho: ' + fmt(latest.predicted_hashRate_GHs) +
+      ' GH/s · real: ' + fmt(latest.actual_hashRate_GHs) +
+      ' GH/s · error registrado: ' + fmt(latest.error_GHs, 4) +
+      ' GH/s · objetivo: ' + (latest.target_timestamp || 'sin fecha')
+    : 'Todavía no hay resultados vinculados.');
+
+  const pending = memory.latest_pending;
+  put('experience-pending-detail', pending
+    ? 'Pendiente más reciente: ' + label(pending.method) +
+      ' · origen: ' + (pending.source_timestamp || 'sin fecha') +
+      ' · predicción: ' + fmt(pending.predicted_hashRate_GHs) + ' GH/s'
+    : 'No hay predicciones pendientes registradas.');
+
+  const recentBox = $('experience-recent');
+  if (recentBox) {
+    recentBox.replaceChildren();
+    const recent = Array.isArray(memory.recent_experiences) ? memory.recent_experiences : [];
+    if (!recent.length) {
+      const empty = document.createElement('p');
+      empty.className = 'small';
+      empty.textContent = 'Todavía no hay experiencias evaluadas.';
+      recentBox.appendChild(empty);
+    }
+    recent.forEach(item => {
+      const row = document.createElement('div');
+      row.className = 'memory-experience';
+      const title = document.createElement('p');
+      title.textContent = label(item.method) + ' · ' + (item.target_timestamp || 'fecha desconocida');
+      const detail = document.createElement('p');
+      detail.textContent = 'Predicción: ' + fmt(item.predicted_hashRate_GHs) +
+        ' GH/s · Real: ' + fmt(item.actual_hashRate_GHs) +
+        ' GH/s · Error registrado: ' + fmt(item.error_GHs, 4) + ' GH/s';
+      row.append(title, detail);
+      recentBox.appendChild(row);
+    });
+  }
+}
+
+
+
+function renderTrendInsights(data) {
+  const trend = data.trend_memory || {};
+  const adaptation = data.contextual_adaptation || {};
+  const counts = trend.counts || {};
+  const methods = trend.overall_by_method || {};
+  const expCounts = adaptation.counts || {};
+  const results = adaptation.results || {};
+  const policy = adaptation.policy || {};
+  const put = (id, value) => {
+    const el = document.getElementById(id);
+    if (el) el.textContent = value;
+  };
+  const num = value => {
+    const n = Number(value);
+    return Number.isFinite(n) ? n.toFixed(3) : '--';
+  };
+  const integer = value => {
+    const n = Number(value);
+    return Number.isFinite(n) ? Math.round(n).toLocaleString('es-EC') : '--';
+  };
+
+  put('trend-status', Object.keys(methods).length ? 'INFORMES DISPONIBLES' : 'SIN DATOS');
+  put('trend-captures', integer(counts.raw_captures));
+  put('trend-outcomes', integer(counts.matched_to_source_capture));
+  put('trend-baseline', num((methods.referencia_1h || {}).mae_GHs));
+  put('trend-adaptive', num(results.adaptive_mae_GHs));
+  put('trend-adaptive-detail', integer(expCounts.evaluated_decisions) + ' decisiones evaluadas');
+
+  const box = document.getElementById('trend-methods');
+  if (box) {
+    box.replaceChildren();
+    const ranked = Object.entries(methods).sort((a, b) =>
+      Number(a[1].mae_GHs) - Number(b[1].mae_GHs));
+    if (!ranked.length) {
+      const empty = document.createElement('p');
+      empty.className = 'small';
+      empty.textContent = 'No hay métricas históricas disponibles.';
+      box.appendChild(empty);
+    }
+    ranked.forEach(([name, metric], index) => {
+      const card = document.createElement('div');
+      card.className = 'memory-method';
+      const title = document.createElement('h3');
+      title.textContent = (index + 1) + '. ' + name.replace(/_/g, ' ');
+      const mae = document.createElement('p');
+      mae.textContent = 'MAE: ' + num(metric.mae_GHs) + ' GH/s';
+      const rmse = document.createElement('p');
+      rmse.textContent = 'RMSE: ' + num(metric.rmse_GHs) + ' GH/s';
+      const bias = document.createElement('p');
+      bias.textContent = 'Error medio con signo: ' + num(metric.mean_signed_error_GHs) + ' GH/s';
+      const samples = document.createElement('p');
+      samples.textContent = 'Evaluaciones: ' + integer(metric.n);
+      card.append(title, mae, rmse, bias, samples);
+      box.appendChild(card);
+    });
+  }
+
+  const adaptive = Number(results.adaptive_mae_GHs);
+  const baseline = Number(results.baseline_mae_GHs);
+  const improvement = Number(results.mae_improvement_GHs);
+  let comparison = 'No hay resultados suficientes para comparar el experimento.';
+  if (Number.isFinite(adaptive) && Number.isFinite(baseline)) {
+    if (Number.isFinite(improvement) && improvement > 0) {
+      comparison = 'El experimento mejoró el MAE en ' + num(improvement) +
+        ' GH/s (' + num(results.mae_improvement_percent) + '%).';
+    } else if (Number.isFinite(improvement) && improvement < 0) {
+      comparison = 'El experimento empeoró el MAE en ' + num(Math.abs(improvement)) +
+        ' GH/s (' + num(Math.abs(Number(results.mae_improvement_percent))) +
+        '%). No superó el método base.';
+    } else {
+      comparison = 'El experimento igualó el MAE de su referencia.';
+    }
+    comparison += ' MAE base: ' + num(baseline) + ' GH/s; adaptativo: ' +
+      num(adaptive) + ' GH/s. Victorias: ' + integer(results.wins) +
+      '; empates: ' + integer(results.ties) + '; derrotas: ' + integer(results.losses) + '.';
+  }
+  put('trend-comparison', comparison);
+  put('trend-warning', policy.warning || 'Resultado retrospectivo; no garantiza mejora futura.');
+}
+
+function renderData(data) {
+  const latest = data.latest || {};
+  const analysis = data.analysis || {};
+    updateCoreTelemetry(latest, data);
+  renderExperienceMemory(data.experience_memory || {});
+  renderTrendInsights(data);
+  const valid = v => v !== null && v !== undefined &&
+    Number.isFinite(Number(v)) && Number(v) >= 0;
+
+  $('hashrate').textContent =
+    valid(latest.hashRate) ? number(latest.hashRate, 2) : '--';
+  $('asic').textContent =
+    valid(latest.temp) ? number(latest.temp, 1) + ' °C' : '--';
+  $('vr').textContent =
+    valid(latest.vrTemp) ? number(latest.vrTemp, 1) + ' °C' : '--';
+  $('frequency').textContent =
+    valid(latest.frequency) ? number(latest.frequency, 0) : '--';
+
+  const accepted = latest.sharesAccepted;
+  const rejected = latest.sharesRejected;
+  $('accepted').textContent = valid(accepted) ? number(accepted, 0) : '--';
+  $('rejected').textContent = valid(rejected) ? number(rejected, 0) : '--';
+
+  const thermal = analysis.thermal_status || 'Sin evaluación';
+  $('thermal').textContent = thermal;
+  $('sampleInfo').textContent =
+    `Muestras disponibles: ${data.sample_count ?? 0} · ` +
+    `Última muestra: ${data.timestamp || 'sin fecha'} · ` +
+    `Antigüedad: ${valid(data.age_seconds) ?
+      Math.round(Number(data.age_seconds)) + ' s' : 'desconocida'}`;
+
+  const mean = analysis.hashrate_mean;
+  const change = analysis.recent_hashrate_change_pct;
+  $('prediction').textContent =
+    'Media histórica: ' + (valid(mean) ? number(mean, 2) + ' GH/s' : 'sin datos') +
+    ' · Cambio reciente: ' +
+    (change !== null && change !== undefined && Number.isFinite(Number(change)) ?
+      number(change, 2) + '%' : 'sin cálculo') +
+    '. Son estadísticas descriptivas, no una predicción validada.';
+
+  const neuron = data.neurona || {};
+  const learningState = $("nc-learning-state");
+  const learningDetail = $("nc-learning-detail");
+
+  if (learningState) {
+    learningState.textContent = neuron.status || "ESTADO DESCONOCIDO";
+    learningState.style.color =
+      Number(neuron.pending_count || 0) > 0 ? "var(--blue)" :
+      neuron.status === "RESULTADO REGISTRADO" ? "var(--green)" :
+      "var(--muted)";
+  }
+
+  if (learningDetail) {
+  const signal = neuron.latest_signal || {};
+  const outcome = neuron.latest_outcome || {};
+
+  const signalChange = signal.change_pct;
+  const signalLine = signal.timestamp
+    ? "Última señal: " +
+      new Date(signal.timestamp).toLocaleString("es-EC") +
+      " · cambio inicial: " +
+      (signalChange != null && Number.isFinite(Number(signalChange))
+        ? Number(signalChange).toFixed(2) + "%"
+        : "sin dato")
+    : "Sin señales registradas";
+
+  const outcomeChange = outcome.post_change_pct;
+  const outcomeLine = outcome.signal_id
+    ? "Última evaluación: media posterior " +
+      (outcome.post_mean_hashrate_GHs != null &&
+       Number.isFinite(Number(outcome.post_mean_hashrate_GHs))
+        ? Number(outcome.post_mean_hashrate_GHs).toFixed(2) + " GH/s"
+        : "sin dato") +
+      " · variación: " +
+      (outcomeChange != null && Number.isFinite(Number(outcomeChange))
+        ? Number(outcomeChange).toFixed(2) + "%"
+        : "sin dato") +
+      " · lecturas sobre referencia: " +
+      (Number.isFinite(Number(outcome.post_samples_above_baseline))
+        ? Number(outcome.post_samples_above_baseline)
+        : 0) + "/" +
+      (Number.isFinite(Number(outcome.post_samples_required))
+        ? Number(outcome.post_samples_required)
+        : 5)
+    : "Todavía no hay evaluaciones registradas";
+
+  learningDetail.textContent =
+    "Última lectura procesada: " +
+    (neuron.last_processed_timestamp || "sin registro") +
+    " · Señales pendientes: " + Number(neuron.pending_count || 0) +
+    ". " + signalLine + ". " + outcomeLine +
+    ". Evaluación estadística del hashrate; no predice bloques.";
+}
+
+  drawHistory(data.history || []);
+}
+
+function drawHistory(history) {
+  const canvas = $('chart');
+  const ctx = canvas.getContext('2d');
+  const w = canvas.clientWidth || 300;
+  const h = 190;
+  const dpr = window.devicePixelRatio || 1;
+  canvas.width = w * dpr;
+  canvas.height = h * dpr;
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  ctx.clearRect(0, 0, w, h);
+
+  const values = history.map(x => Number(x.hashRate))
+    .filter(v => Number.isFinite(v) && v >= 0);
+
+  if (values.length < 2) {
+    ctx.fillStyle = '#8295aa';
+    ctx.font = '12px Segoe UI, sans-serif';
+    ctx.fillText('Esperando suficientes muestras de hashrate…', 8, 28);
+    return;
+  }
+
+  const min = Math.min(...values);
+  const max = Math.max(...values);
+  const span = max - min || 1;
+  const pad = 12;
+
+  ctx.strokeStyle = '#1b3a50';
+  ctx.lineWidth = 1;
+  for (let i = 0; i < 4; i++) {
+    const y = pad + i * (h - 2 * pad) / 3;
+    ctx.beginPath();
+    ctx.moveTo(0, y);
+    ctx.lineTo(w, y);
+    ctx.stroke();
+  }
+
+  ctx.beginPath();
+  values.forEach((v, i) => {
+    const x = pad + i * (w - 2 * pad) / (values.length - 1);
+    const y = h - pad - ((v - min) / span) * (h - 2 * pad);
+    if (i === 0) ctx.moveTo(x, y);
+    else ctx.lineTo(x, y);
+  });
+  ctx.strokeStyle = '#00c8ff';
+  ctx.lineWidth = 2;
+  ctx.shadowBlur = 8;
+  ctx.shadowColor = '#00c8ff';
+  ctx.stroke();
+  ctx.shadowBlur = 0;
+
+  ctx.fillStyle = '#8295aa';
+  ctx.font = '11px Segoe UI, sans-serif';
+  ctx.fillText('Máx. ' + number(max, 1) + ' GH/s', 8, 12);
+  ctx.fillText('Mín. ' + number(min, 1) + ' GH/s', 8, h - 2);
+}
+let neuronPoints = [];
+let animationFrame = 0;
+
+function drawNeuron() {
+  const c = $('neuron');
+  const ctx = c.getContext('2d');
+  const w = c.clientWidth, h = c.clientHeight;
+  if (!w || !h) return;
+
+  const dpr = window.devicePixelRatio || 1;
+  if (c.width !== Math.round(w*dpr) ||
+      c.height !== Math.round(h*dpr)) {
+    c.width = Math.round(w*dpr);
+    c.height = Math.round(h*dpr);
+    neuronPoints = [];
+  }
+  ctx.setTransform(dpr,0,0,dpr,0,0);
+  ctx.clearRect(0,0,w,h);
+
+  if (!neuronPoints.length) {
+    neuronPoints = Array.from({length:34}, () => ({
+      x:18+Math.random()*(w-36),
+      y:12+Math.random()*(h-24),
+      phase:Math.random()*Math.PI*2,
+      speed:0.018+Math.random()*0.035,
+      color:['#00c8ff','#00ff9d','#ff3158'][
+        Math.floor(Math.random()*3)]
+    }));
+  }
+
+  const learningActive = performance.now() < learningFlashUntil;
+
+  const activeColor = learningActive ? '#a78bfa' : '#00c8ff';
+
+  const t = performance.now()*0.001;
+  neuronPoints.forEach(p => {
+    p.x += Math.sin(t+p.phase)*0.12;
+    p.y += Math.cos(t*0.8+p.phase)*0.12;
+  });
+
+  for (let i=0;i<neuronPoints.length;i++) {
+    for (let j=i+1;j<neuronPoints.length;j++) {
+      const a=neuronPoints[i], b=neuronPoints[j];
+      const dist=Math.hypot(a.x-b.x,a.y-b.y);
+      if (dist<90) {
+        ctx.strokeStyle = learningActive ? (dist<55 ? '#a78bfa70' : '#a78bfa25') : (dist<55 ? '#00c8ff45' : '#00c8ff20');
+        ctx.beginPath();
+        ctx.moveTo(a.x,a.y);
+        ctx.lineTo(b.x,b.y);
+        ctx.stroke();
+
+        const pulse=(t*1.5+a.phase)%1;
+        if (pulse<0.22 && dist<75) {
+          const k=(pulse/0.22);
+          const x=a.x+(b.x-a.x)*k;
+          const y=a.y+(b.y-a.y)*k;
+          ctx.beginPath();
+          ctx.arc(x,y,2.4,0,Math.PI*2);
+          ctx.fillStyle=activeColor;
+          ctx.shadowBlur=14;
+          ctx.shadowColor=activeColor;
+          ctx.fill();
+          ctx.shadowBlur=0;
+        }
+      }
+    }
+  }
+
+  neuronPoints.forEach(p => {
+    const glow=5+4*(0.5+0.5*Math.sin(t*3+p.phase));
+    ctx.beginPath();
+    ctx.arc(p.x,p.y,2,0,Math.PI*2);
+    ctx.fillStyle=activeColor;
+    ctx.shadowBlur=glow*2;
+    ctx.shadowColor=activeColor;
+    ctx.fill();
+  });
+  ctx.shadowBlur=0;
+  ctx.font='11px Segoe UI, sans-serif';
+  ctx.textAlign='center';
+  ctx.fillStyle=learningActive ? '#a78bfa' : '#8295aa';
+  ctx.fillText(
+    learningActive
+      ? 'APRENDIZAJE ACTUALIZADO · ' + learningUpdateCount
+      : 'TELEMETRÍA · ' + learningUpdateCount + ' ACTUALIZACIONES',
+    w/2, h-8
+  );
+  animationFrame=requestAnimationFrame(drawNeuron);
+}
+window.addEventListener('resize',() => { neuronPoints=[]; });
+drawNeuron();
+refresh();
+loadAuditReader();
+setInterval(refresh,5000);
+</script>
+<script>
+
+/* TEOS CONTROL CENTER 2.0 — safe DOM composition */
+(() => {
+  const main = document.querySelector('main');
+  if (!main || main.querySelector('.cc-layout')) return;
+
+  const sections = [...main.querySelectorAll('section')];
+  const metrics = sections.find(el => el.querySelector('#hashrate') &&
+                                      el.querySelector('#frequency'));
+  const observation = sections.find(el => el.querySelector('#neuron'));
+  const experience = sections.find(el => el.querySelector('#experience-title'));
+  const trends = sections.find(el => el.querySelector('#trend-title'));
+  const activity = sections.find(el => el.querySelector('#chart'));
+  const prediction = sections.find(el => el.querySelector('#prediction'));
+  const footer = main.querySelector('footer');
+    const anomalies = document.getElementById('anomaly-fluctuations-panel');
+
+  const expected = [metrics, observation, experience, trends,
+                    activity, prediction, footer];
+  if (expected.some(el => !el)) {
+    console.error('[TEOS CC2] Composición cancelada: falta una sección esperada.');
+    return;
+  }
+
+  const layout = document.createElement('div');
+  layout.className = 'cc-layout';
+  layout.id = 'teos-control-center';
+
+  const sidebar = document.createElement('aside');
+  sidebar.className = 'cc-sidebar';
+  sidebar.setAttribute('aria-label', 'Navegación de TEOS');
+
+  const brand = document.createElement('div');
+  brand.className = 'cc-brand';
+  brand.textContent = 'TEOS / NEXUS 2.0';
+  sidebar.appendChild(brand);
+
+  const navCaption = document.createElement('div');
+  navCaption.className = 'cc-nav-caption';
+  navCaption.textContent = 'CENTRO DE OPERACIONES';
+  sidebar.appendChild(navCaption);
+
+  const navItems = [
+    ['overview', '01 · Operaciones', metrics],
+    ['experience-memory', '03 · Memoria', experience],
+    ['trend-adaptation', '04 · Rendimiento', trends],
+    ['activity-log', '05 · Actividad', activity],
+    ['prediction-lab', '06 · Laboratorio', prediction]
+  ];
+
+  navItems.forEach(([id, label, target]) => {
+    target.id = id;
+    const a = document.createElement('a');
+    a.href = '#' + id;
+    a.textContent = label;
+    sidebar.appendChild(a);
+  });
+
+  const sideStatus = document.createElement('div');
+  sideStatus.className = 'cc-side-status';
+  sideStatus.innerHTML = 'TEOS NEURONA<br>INTERFAZ OPERATIVA<br><span style="color:#36ffc0">● API EN VIVO</span>';
+  sidebar.appendChild(sideStatus);
+
+  const workspace = document.createElement('div');
+  workspace.className = 'cc-workspace';
+
+  const hero = document.createElement('div');
+  hero.className = 'cc-hero-grid';
+
+  observation.classList.add('cc-observation');
+  hero.append(observation);
+
+  const modules = document.createElement('div');
+  modules.className = 'cc-module-grid';
+  experience.id = 'experience-memory';
+  trends.id = 'trend-adaptation';
+  modules.append(experience, trends);
+if (anomalies) {
+  anomalies.classList.add('cc-anomaly-module');
+  modules.appendChild(anomalies);
+}
+
+
+  const powPanel = document.createElement('section');
+  powPanel.id = 'teos-pow-panel';
+  powPanel.className = 'cc-pow-module';
+  powPanel.style.cssText = 'grid-column:1/-1;padding:22px;border:1px solid #17658a;border-radius:16px;background:linear-gradient(135deg,#071a2b,#0a263b);color:#d9f4ff;min-width:0;overflow-wrap:anywhere';
+  powPanel.innerHTML = `
+    <div style="display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;align-items:center">
+      <div>
+        <div style="font-size:11px;letter-spacing:2px;color:#42d9ff">MÓDULO DE EVIDENCIA · TEOS PoW</div>
+        <h2 style="margin:8px 0;font-size:22px">Prueba de trabajo</h2>
+        <div id="pow-source" style="color:#9bb8cc;font-size:13px">Consultando evidencias guardadas…</div>
+      </div>
+      <div id="pow-integrity" style="padding:8px 12px;border:1px solid #287d9c;border-radius:9px;color:#42d9ff">VERIFICANDO…</div>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(155px,1fr));gap:12px;margin-top:20px">
+      <div style="padding:14px;border:1px solid #19465e;border-radius:10px">
+        <div style="font-size:12px;color:#9bb8cc">Continuidad documentada</div>
+        <strong id="pow-blocks" style="display:block;font-size:24px;margin-top:8px">--</strong>
+        <div id="pow-links" style="font-size:12px;color:#9bb8cc">Enlaces: --</div>
+      </div>
+      <div style="padding:14px;border:1px solid #19465e;border-radius:10px">
+        <div style="font-size:12px;color:#9bb8cc">Revalidación de Core</div>
+        <strong id="pow-core" style="display:block;font-size:24px;margin-top:8px">--</strong>
+        <div id="pow-heights" style="font-size:12px;color:#9bb8cc">Alturas: --</div>
+      </div>
+      <div style="padding:14px;border:1px solid #19465e;border-radius:10px">
+        <div style="font-size:12px;color:#9bb8cc">Modo del módulo</div>
+        <strong id="pow-mode" style="display:block;font-size:17px;margin-top:8px">--</strong>
+        <div style="font-size:12px;color:#9bb8cc">Solo lectura</div>
+      </div>
+    </div>
+    <div id="pow-consensus" style="margin-top:16px;padding:12px;border-left:3px solid #e8b65a;background:#171f2a;color:#ffe0a0">
+      Consenso completo: pendiente de verificar.
+    </div>
+    <div id="pow-message" style="font-size:12px;color:#9bb8cc;margin-top:12px">Esperando respuesta de la API…</div>
+  `;
+  modules.appendChild(powPanel);
+
+  const bottom = document.createElement('div');
+  bottom.className = 'cc-bottom-grid';
+  activity.id = 'activity-log';
+  prediction.id = 'prediction-lab';
+  bottom.append(activity, prediction);
+
+  metrics.id = 'overview';
+  workspace.append(metrics, hero, modules, bottom);
+    
+    if (footer) workspace.appendChild(footer);
+
+  layout.append(sidebar, workspace);
+  main.replaceChildren(layout);
+
+  console.info('[TEOS CC2] Composición aplicada; módulos existentes preservados.');
+})();
+
+</script>
+
+<script>
+(() => {
+  "use strict";
+
+  const el = id => document.getElementById(id);
+  const fmt = (value, digits = 2) => {
+    const n = Number(value);
+    return Number.isFinite(n)
+      ? n.toLocaleString("es-EC", { maximumFractionDigits: digits })
+      : "--";
+  };
+  const dateLabel = value => {
+    if (!value) return "Fecha desconocida";
+    const d = new Date(value);
+    return Number.isNaN(d.getTime())
+      ? String(value)
+      : d.toLocaleString("es-EC");
+  };
+
+  function draw(events) {
+    const canvas = el("anomaly-fluctuations-chart");
+    if (!canvas) return;
+    const width = canvas.clientWidth || 320;
+    const height = 260;
+    const dpr = window.devicePixelRatio || 1;
+    canvas.width = Math.round(width * dpr);
+    canvas.height = Math.round(height * dpr);
+    const ctx = canvas.getContext("2d");
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    ctx.clearRect(0, 0, width, height);
+
+    const rows = events.map(e => ({
+      event: e,
+      observed: Number(e.observed_hashRate_GHs),
+      baseline: Number(e.baseline_median_GHs),
+      hourly: Number(e.reference_1h_GHs)
+    })).filter(p =>
+      Number.isFinite(p.observed) && p.observed > 0 &&
+      Number.isFinite(p.baseline) && p.baseline > 0 &&
+      Number.isFinite(p.hourly) && p.hourly > 0
+    );
+
+    if (!rows.length) {
+      ctx.fillStyle = "#a8b6c7";
+      ctx.font = "13px Segoe UI, sans-serif";
+      ctx.fillText("No hay eventos con referencias numéricas disponibles.", 8, 28);
+      ctx.fillText("Los datos originales no se modifican.", 8, 50);
+      return;
+    }
+
+    const pad = { left: 60, right: 12, top: 22, bottom: 45 };
+    const plotW = Math.max(1, width - pad.left - pad.right);
+    const plotH = height - pad.top - pad.bottom;
+    const all = rows.flatMap(p => [p.observed, p.baseline, p.hourly]);
+    const minLog = Math.min(...all.map(Math.log10));
+    const maxLog = Math.max(...all.map(Math.log10));
+    const low = Math.floor(minLog);
+    const high = Math.max(low + 1, Math.ceil(maxLog));
+    const y = v => pad.top + (high - Math.log10(v)) / (high - low) * plotH;
+    const x = i => rows.length === 1
+      ? pad.left + plotW / 2
+      : pad.left + i * plotW / (rows.length - 1);
+
+    ctx.font = "10px Segoe UI, sans-serif";
+    ctx.lineWidth = 1;
+    for (let exponent = low; exponent <= high; exponent++) {
+      const yy = pad.top + (high - exponent) / (high - low) * plotH;
+      ctx.strokeStyle = "#294052";
+      ctx.beginPath();
+      ctx.moveTo(pad.left, yy);
+      ctx.lineTo(width - pad.right, yy);
+      ctx.stroke();
+      ctx.fillStyle = "#a8b6c7";
+      ctx.fillText("10^" + exponent, 4, yy + 4);
+    }
+
+    const series = [
+      { key: "observed", color: "#ff657a" },
+      { key: "baseline", color: "#00c8ff" },
+      { key: "hourly", color: "#f6c85f" }
+    ];
+
+    for (const s of series) {
+      ctx.beginPath();
+      rows.forEach((p, i) => {
+        const xx = x(i), yy = y(p[s.key]);
+        if (i === 0) ctx.moveTo(xx, yy);
+        else ctx.lineTo(xx, yy);
+      });
+      ctx.strokeStyle = s.color;
+      ctx.lineWidth = s.key === "observed" ? 2.5 : 1.8;
+      ctx.stroke();
+
+      rows.forEach((p, i) => {
+        ctx.beginPath();
+        ctx.arc(x(i), y(p[s.key]), s.key === "observed" ? 4 : 3, 0, Math.PI * 2);
+        ctx.fillStyle = s.color;
+        ctx.fill();
+      });
+    }
+
+    ctx.fillStyle = "#a8b6c7";
+    ctx.font = "10px Segoe UI, sans-serif";
+    const indexes = [...new Set([
+      0, Math.floor((rows.length - 1) / 2), rows.length - 1
+    ])];
+    indexes.forEach(i => {
+      const label = dateLabel(rows[i].event.timestamp);
+      const shortLabel = label.length > 19 ? label.slice(0, 19) : label;
+      ctx.fillText(shortLabel, Math.min(Math.max(pad.left, x(i) - 42), width - 112),
+                   height - 20);
+    });
+  }
+
+  function render(events) {
+    el("anomaly-count").textContent = fmt(events.length, 0);
+    el("anomaly-unverified").textContent =
+      fmt(events.filter(e => e.status === "unverified").length, 0);
+
+    const sorted = [...events].sort((a, b) =>
+      String(a.timestamp || "").localeCompare(String(b.timestamp || ""))
+    );
+    const last = sorted[sorted.length - 1];
+    el("anomaly-last-value").textContent =
+      last ? fmt(last.observed_hashRate_GHs) : "--";
+
+    const list = el("anomaly-event-list");
+    list.replaceChildren();
+
+    if (!sorted.length) {
+      const p = document.createElement("p");
+      p.className = "small";
+      p.textContent = "No hay anomalías registradas en el historial disponible.";
+      list.appendChild(p);
+    } else {
+      for (const event of sorted.slice().reverse()) {
+        const card = document.createElement("article");
+        card.style.cssText =
+          "padding:12px 0;border-bottom:1px solid #1b3a50;overflow-wrap:anywhere";
+
+        const title = document.createElement("div");
+        title.style.cssText = "font-weight:600;color:#ff657a";
+        title.textContent =
+          fmt(event.observed_hashRate_GHs) + " GH/s · " +
+          (event.status || "estado desconocido");
+
+        const details = document.createElement("p");
+        details.className = "small";
+        details.textContent =
+          dateLabel(event.timestamp) +
+          " · Mediana: " + fmt(event.baseline_median_GHs) + " GH/s" +
+          " · Referencia 1 h: " + fmt(event.reference_1h_GHs) + " GH/s";
+
+        const ratios = document.createElement("p");
+        ratios.className = "small";
+        ratios.textContent =
+          "Relación con mediana: " + fmt(event.ratio_to_baseline) + "×" +
+          " · Relación con 1 h: " + fmt(event.ratio_to_reference_1h) + "×" +
+          " · ID: " + String(event.event_id || "sin ID");
+
+        const note = document.createElement("p");
+        note.className = "small";
+        note.textContent = event.diagnosis_note ||
+          "La causa todavía no está documentada.";
+
+        card.append(title, details, ratios, note);
+        list.appendChild(card);
+      }
+    }
+
+    el("anomaly-panel-status").textContent =
+      "ACTUALIZADO · " + dateLabel(new Date().toISOString());
+    draw(sorted);
+  }
+
+  async function refreshAnomalies() {
+    try {
+      const response = await fetch("/api/status", { cache: "no-store" });
+      if (!response.ok) throw new Error("HTTP " + response.status);
+      const data = await response.json();
+      render(Array.isArray(data.anomaly_events) ? data.anomaly_events : []);
+    } catch (error) {
+      const status = el("anomaly-panel-status");
+      if (status) status.textContent = "API NO DISPONIBLE";
+      console.error("No se pudo cargar el historial de anomalías:", error);
+    }
+  }
+
+  window.addEventListener("resize", refreshAnomalies);
+  refreshAnomalies();
+  window.setInterval(refreshAnomalies, 15000);
+})();
+</script>
+
+
+<!-- TEOS_NEURON_RED_ANOMALY_LAYER_V1 -->
+<style id="teos-red-anomaly-style">
+  #teos-neuron-anomaly-overlay {
+    position: absolute;
+    pointer-events: none;
+    z-index: 20;
+    overflow: visible;
+  }
+
+  #teos-neuron-anomaly-overlay .teos-red-pulse {
+    fill: none;
+    stroke: #FF0000;
+    stroke-width: 2.5;
+    filter: drop-shadow(0 0 5px #FF0000);
+  }
+
+  #teos-neuron-anomaly-overlay .teos-red-dot {
+    fill: #FF0000;
+    filter: drop-shadow(0 0 7px #FF0000);
+  }
+
+  #teos-neuron-anomaly-overlay .teos-red-label {
+    fill: #FF0000;
+    font: 11px sans-serif;
+    font-weight: 700;
+  }
+
+  #teos-neuron-anomaly-status {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 7px;
+    margin-top: 8px;
+    font-size: 12px;
+  }
+
+  #teos-neuron-anomaly-status .teos-anomaly-tag {
+    color: #FF0000;
+    border: 1px solid #FF0000;
+    border-radius: 6px;
+    padding: 4px 8px;
+    background: rgba(255, 0, 0, 0.08);
+  }
+</style>
+
+<script id="teos-red-anomaly-script">
+(() => {
+  "use strict";
+
+  const RED = "#FF0000";
+  let overlay, svg, statusBox, neuron, parent;
+  let previousRejected = null;
+  let rejectedUntil = 0;
+  let latestData = null;
+  let resizeObserver = null;
+
+  function setup() {
+    neuron = document.getElementById("neuron");
+    if (!neuron || !neuron.parentElement) return false;
+
+    parent = neuron.parentElement;
+
+    if (getComputedStyle(parent).position === "static") {
+      parent.style.position = "relative";
+    }
+
+    overlay = document.getElementById("teos-neuron-anomaly-overlay");
+
+    if (!overlay) {
+      overlay = document.createElement("div");
+      overlay.id = "teos-neuron-anomaly-overlay";
+      overlay.setAttribute("aria-hidden", "true");
+      overlay.innerHTML = `
+        <svg width="100%" height="100%" viewBox="0 0 320 220"
+             preserveAspectRatio="none">
+          <g id="teos-red-signals"></g>
+        </svg>`;
+      parent.appendChild(overlay);
+    }
+
+    svg = overlay.querySelector("#teos-red-signals");
+
+    if (!statusBox) {
+      statusBox = document.createElement("div");
+      statusBox.id = "teos-neuron-anomaly-status";
+      statusBox.setAttribute("role", "status");
+      statusBox.setAttribute("aria-live", "polite");
+      overlay.insertAdjacentElement("afterend", statusBox);
+    }
+
+    positionOverlay();
+
+    if (!resizeObserver && "ResizeObserver" in window) {
+      resizeObserver = new ResizeObserver(positionOverlay);
+      resizeObserver.observe(neuron);
+    }
+
+    return true;
+  }
+
+  function positionOverlay() {
+    if (!neuron || !overlay || !parent) return;
+
+    const canvasRect = neuron.getBoundingClientRect();
+    const parentRect = parent.getBoundingClientRect();
+
+    overlay.style.left =
+      (canvasRect.left - parentRect.left + parent.scrollLeft) + "px";
+    overlay.style.top =
+      (canvasRect.top - parentRect.top + parent.scrollTop) + "px";
+    overlay.style.width = canvasRect.width + "px";
+    overlay.style.height = canvasRect.height + "px";
+  }
+
+  function median(values) {
+    const sorted = values
+      .filter(v => Number.isFinite(v) && v > 0)
+      .sort((a, b) => a - b);
+
+    if (!sorted.length) return null;
+
+    const mid = Math.floor(sorted.length / 2);
+    return sorted.length % 2
+      ? sorted[mid]
+      : (sorted[mid - 1] + sorted[mid]) / 2;
+  }
+
+  function detectSignals(data) {
+    const latest = data && data.latest ? data.latest : {};
+    const history = Array.isArray(data && data.history)
+      ? data.history
+      : [];
+
+    const validHistory = history.filter(s =>
+      Number.isFinite(Number(s.hashRate)) &&
+      Number(s.hashRate) > 0
+    );
+
+    const previousRates = validHistory
+      .slice(-11, -1)
+      .map(s => Number(s.hashRate));
+
+    const baseline = previousRates.length >= 5
+      ? median(previousRates)
+      : null;
+
+    const currentRate = Number(latest.hashRate);
+    const rate1h = Number(latest.hashRate_1h);
+
+    // Umbral visual de pico; no confirma una falla física.
+    const hasSpike =
+      baseline !== null &&
+      Number.isFinite(currentRate) &&
+      currentRate > baseline * 3 &&
+      Number.isFinite(rate1h) &&
+      rate1h > 0 &&
+      currentRate > rate1h * 3;
+
+    const rejected = Number(latest.sharesRejected);
+
+    if (Number.isFinite(rejected)) {
+      if (previousRejected !== null && rejected > previousRejected) {
+        rejectedUntil = Date.now() + 60000;
+      }
+      previousRejected = rejected;
+    }
+
+    const hasRejectedIncrease = Date.now() < rejectedUntil;
+
+    const events = Array.isArray(data && data.anomaly_events)
+      ? data.anomaly_events
+      : [];
+
+    // Mostrar eventos pendientes aunque sean históricos.
+    // La fecha no elimina una anomalía aún no verificada.
+    const recentEvent = events.some(event =>
+      event &&
+      (
+        event.status === "unverified" ||
+        event.status === "pending"
+      )
+    );
+
+    return {
+      spike: hasSpike,
+      rejected: hasRejectedIncrease,
+      event: recentEvent
+    };
+  }
+
+  function draw(data) {
+    if (!setup()) return;
+
+    const signals = detectSignals(data);
+    const active = [
+      signals.spike,
+      signals.rejected,
+      signals.event
+    ].filter(Boolean).length;
+
+    const marks = [
+      { on: signals.spike, x: 83, y: 65, label: "HASHRATE" },
+      { on: signals.rejected, x: 237, y: 65, label: "RECHAZOS" },
+      { on: signals.event, x: 160, y: 180, label: "ANOMALÍA" }
+    ];
+
+    svg.replaceChildren();
+
+    for (const mark of marks) {
+      if (!mark.on) continue;
+
+      const ns = "http://www.w3.org/2000/svg";
+
+      const ring = document.createElementNS(ns, "circle");
+      ring.setAttribute("cx", mark.x);
+      ring.setAttribute("cy", mark.y);
+      ring.setAttribute("r", "12");
+      ring.setAttribute("class", "teos-red-pulse");
+      svg.appendChild(ring);
+
+      const dot = document.createElementNS(ns, "circle");
+      dot.setAttribute("cx", mark.x);
+      dot.setAttribute("cy", mark.y);
+      dot.setAttribute("r", "4");
+      dot.setAttribute("class", "teos-red-dot");
+      svg.appendChild(dot);
+
+      const label = document.createElementNS(ns, "text");
+      label.setAttribute("x", mark.x);
+      label.setAttribute("y", mark.y + 25);
+      label.setAttribute("text-anchor", "middle");
+      label.setAttribute("class", "teos-red-label");
+      label.textContent = mark.label;
+      svg.appendChild(label);
+    }
+
+    statusBox.replaceChildren();
+
+    const labels = [];
+    if (signals.spike) labels.push("Pico de hashrate");
+    if (signals.rejected) labels.push("Aumento de rechazos");
+    if (signals.event) labels.push("Evento reciente");
+
+    if (!labels.length) {
+      statusBox.textContent = "Sin señales anómalas activas detectadas";
+      statusBox.style.color = "#94A3B8";
+      statusBox.style.border = "none";
+    } else {
+      statusBox.style.color = RED;
+      for (const label of labels) {
+        const tag = document.createElement("span");
+        tag.className = "teos-anomaly-tag";
+        tag.textContent = "● " + label;
+        statusBox.appendChild(tag);
+      }
+    }
+
+    positionOverlay();
+  }
+
+  async function poll() {
+    try {
+      const response = await fetch("/api/status", {
+        cache: "no-store"
+      });
+      if (!response.ok) return;
+
+      const data = await response.json();
+      latestData = data;
+      draw(data);
+    } catch (error) {
+      // No se altera el panel principal si la API no está disponible.
+    }
+  }
+
+  function start() {
+    if (!setup()) {
+      setTimeout(start, 1000);
+      return;
+    }
+
+    poll();
+    setInterval(poll, 5000);
+  }
+
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", start, { once: true });
+  } else {
+    start();
+  }
+})();
+</script>
+<!-- /TEOS_NEURON_RED_ANOMALY_LAYER_V1 -->
+
+
+<script id="teos-pow-panel-client">
+(() => {
+  'use strict';
+  const byId = id => document.getElementById(id);
+  const put = (id, value) => {
+    const node = byId(id);
+    if (node) node.textContent = value == null ? '--' : String(value);
+  };
+  async function refreshPow() {
+    try {
+      const response = await fetch('/api/pow/status', {cache: 'no-store'});
+      if (!response.ok) throw new Error('HTTP ' + response.status);
+      const data = await response.json();
+      if (!data.ok) throw new Error('La API no confirmó el estado');
+
+      const continuity = data.continuity || {};
+      const core = data.core_revalidation || {};
+      put('pow-source', data.source || 'Evidencia guardada');
+      put('pow-integrity', data.documentary_integrity || 'NO VERIFICADA');
+      put('pow-blocks', continuity.blocks_documented ?? 0);
+      put('pow-links', 'Enlaces documentados: ' + (continuity.links_documented ?? 0));
+      put('pow-core', (core.hash_matches ?? 0) + '/' + (core.comparisons_documented ?? 0) + ' hashes');
+      put('pow-heights', 'Alturas: ' + ((core.heights || []).join(' · ') || '--'));
+      put('pow-mode', data.read_only ? 'SOLO LECTURA' : (data.mode || 'No especificado'));
+      put('pow-consensus', 'CONSENSO COMPLETO: ' + (data.consensus_complete || 'NO VERIFICADO'));
+      put('pow-message', (data.limitations || []).join(' '));
+    } catch (error) {
+      put('pow-integrity', 'API NO DISPONIBLE');
+      put('pow-message', 'No se pudo consultar /api/pow/status. ' + error.message);
+    }
+  }
+  refreshPow();
+  window.setInterval(refreshPow, 30000);
+})();
+</script>
+
+
+<script id="teos-neuron-services-script">
+(() => {
+  const canvas = document.getElementById("neuron");
+  if (!canvas) {
+    console.error("[TEOS] No se encontró la neurona central.");
+    return;
+  }
+
+  let row = document.getElementById("teos-neuron-services-row");
+  if (!row) {
+    row = document.createElement("div");
+    row.id = "teos-neuron-services-row";
+    row.className = "teos-neuron-services-row";
+    canvas.parentNode.insertBefore(row, canvas);
+    row.appendChild(canvas);
+  }
+
+  let panel = document.getElementById("teos-active-services");
+  if (!panel) {
+    panel = document.createElement("section");
+    panel.id = "teos-active-services";
+    panel.setAttribute("aria-label", "Estados de servicios TEOS");
+    panel.innerHTML = `
+      <div class="teos-services-head">
+        <strong>ESTADOS ACTIVOS · TEOS</strong>
+        <span id="teos-services-updated">VERIFICANDO…</span>
+      </div>
+      <div class="teos-service-item" data-service="teos-neurona-api.service">
+        <span class="teos-service-led"></span>
+        <div class="teos-service-copy"><strong>API NEURONA</strong>
+          <small>teos-neurona-api.service</small></div>
+        <span class="teos-service-state">CONSULTANDO</span>
+      </div>
+      <div class="teos-service-item" data-service="teos-nexus-collector.service">
+        <span class="teos-service-led"></span>
+        <div class="teos-service-copy"><strong>RECOLECTOR</strong>
+          <small>teos-nexus-collector.service</small></div>
+        <span class="teos-service-state">CONSULTANDO</span>
+      </div>
+      <div class="teos-service-item" data-service="teos-neurona-scheduler.service">
+        <span class="teos-service-led"></span>
+        <div class="teos-service-copy"><strong>PLANIFICADOR</strong>
+          <small>teos-neurona-scheduler.service</small></div>
+        <span class="teos-service-state">CONSULTANDO</span>
+      </div>
+      <div class="teos-services-foot">Estado consultado a systemd · actualización automática cada 5 s</div>`;
+  }
+  row.appendChild(panel);
+
+  const units = [
+    "teos-neurona-api.service",
+    "teos-nexus-collector.service",
+    "teos-neurona-scheduler.service"
+  ];
+
+  function showState(unit, raw) {
+    const item = panel.querySelector('[data-service="' + unit + '"]');
+    if (!item) return;
+    const state = String(raw || "unknown").toLowerCase();
+    let label = state.toUpperCase();
+    let kind = "warning";
+    if (state === "active") { label = "ACTIVO"; kind = "active"; }
+    else if (state === "inactive") { label = "INACTIVO"; kind = "inactive"; }
+    else if (state === "failed") { label = "FALLIDO"; kind = "inactive"; }
+    else if (state === "activating") { label = "INICIANDO"; }
+    else if (state === "deactivating") { label = "DETENIENDO"; }
+    else if (state === "unknown") { label = "SIN DATOS"; }
+    item.querySelector(".teos-service-led").className = "teos-service-led " + kind;
+    item.querySelector(".teos-service-state").className = "teos-service-state " + kind;
+    item.querySelector(".teos-service-state").textContent = label;
+  }
+
+  async function refreshServiceStates() {
+    const updated = document.getElementById("teos-services-updated");
+    try {
+      const response = await fetch("/api/services", {cache:"no-store"});
+      if (!response.ok) throw new Error("HTTP " + response.status);
+      const data = await response.json();
+      units.forEach(unit => showState(unit, data.services && data.services[unit]));
+      if (updated) updated.textContent =
+        "ACTUALIZADO · " + new Date().toLocaleTimeString();
+    } catch (error) {
+      units.forEach(unit => showState(unit, "unknown"));
+      if (updated) updated.textContent = "SIN CONEXIÓN";
+      console.error("[TEOS] No se pudieron leer los estados systemd:", error);
+    }
+  }
+
+  window.addEventListener("resize", () => {
+    // Permite que el dibujo existente reajuste el canvas.
+  });
+  window.dispatchEvent(new Event("resize"));
+  refreshServiceStates();
+  window.setInterval(refreshServiceStates, 5000);
+})();
+</script>
+
+</body>
+</html>

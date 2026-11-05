@@ -1,0 +1,39 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+
+# Backups manuales
+*.bak
+*.bak_*
+*.bak-*
+*.backup-*
+*.backup_*
+*.pre_quarantine*
+*.pre-register-guard
+
+# Locks y temporales
+*.lock
+*.tmp
+
+# Logs (se regeneran)
+logs/*.log
+*.log
+
+# Datos mutables: NO se versionan los outputs completos
+data/raw/*.jsonl
+data/processed/*.jsonl
+data/processed/*.json
+data/processed/*.lock
+experiments/*_report.json
+experiments/*_manifest.json
+experiments/*.jsonl
+
+# PERO sí queremos versionar muestras mínimas (ver nota abajo)
+!data/raw/.gitkeep
+!data/processed/.gitkeep
+backups/
+
+# Backups de datos
+data/processed/backup_quarantine_*/
+data/processed/*.before_refresh_*

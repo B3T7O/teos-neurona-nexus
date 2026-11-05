@@ -1,0 +1,152 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>TEOS · NEURONA BLOCK CORE</title>
+<style>
+:root{color-scheme:dark;--bg:#070910;--panel:#111622;--orange:#ff8a00;--gold:#ffd45c;--muted:#9ba8b8}
+*{box-sizing:border-box}
+body{margin:0;background:radial-gradient(ellipse at 50% 20%,#30200d,var(--bg) 65%);color:#f3f6fc;font:15px system-ui,Arial;min-height:100vh}
+header{padding:22px;border-bottom:1px solid #49341b}
+h1{margin:0;font-size:22px;letter-spacing:2px}h1 span{color:var(--orange)}
+header p,.muted{color:var(--muted);font-size:13px}
+main{max-width:1100px;margin:auto;padding:20px}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(270px,1fr));gap:16px}
+.panel{background:#111622dd;border:1px solid #49341b;border-radius:15px;padding:18px}
+h2{font-size:14px;letter-spacing:1.5px;color:var(--gold)}
+.scene{height:340px;display:grid;place-items:center;perspective:850px;overflow:hidden}
+.cube{position:relative;width:180px;height:180px;transform-style:preserve-3d;will-change:transform}
+.face{position:absolute;inset:0;display:grid;place-items:center;text-align:center;padding:12px;border:2px solid var(--orange);background:#ff8a001b;box-shadow:inset 0 0 28px #ff8a0022,0 0 16px #ff8a0040;backface-visibility:visible;font-size:13px;font-weight:700}
+.face.done{border-color:var(--gold);background:#ffd45c45;box-shadow:inset 0 0 35px #ffd45c35,0 0 25px #ffd45c77;color:#fff1bc}
+.front{transform:translateZ(90px)}.back{transform:rotateY(180deg) translateZ(90px)}
+.right{transform:rotateY(90deg) translateZ(90px)}.left{transform:rotateY(-90deg) translateZ(90px)}
+.top{transform:rotateX(90deg) translateZ(90px)}.bottom{transform:rotateX(-90deg) translateZ(90px)}
+button{background:#30200f;border:1px solid #a65e16;color:#ffe0a0;border-radius:8px;padding:9px 12px;cursor:pointer}
+button:hover{background:#57330e}button:focus-visible,input:focus-visible{outline:2px solid var(--gold)}
+.controls{display:flex;flex-wrap:wrap;gap:8px;margin:12px 0}
+label{display:block;color:var(--muted);font-size:13px;margin:13px 0}
+input[type=range]{width:100%;accent-color:var(--orange)}
+.task{display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid #29303c}
+.task:last-child{border-bottom:0}.task input{accent-color:var(--gold);width:18px;height:18px}
+.task span{flex:1}.state{font-size:11px;color:var(--muted)}
+.metric{font-size:25px;color:var(--gold);font-weight:700}
+footer{text-align:center;padding:24px;color:var(--muted);font-size:12px}
+</style>
+</head>
+<body>
+<header>
+  <h1>TEOS <span>NEURONA</span> · BLOCK CORE</h1>
+  <p>NÚCLEO GEOMÉTRICO · PROGRESO PERSISTENTE · MINERÍA OBSERVADA</p>
+</header>
+<main>
+  <section class="grid">
+    <div class="panel">
+      <h2>NÚCLEO 3D</h2>
+      <div class="scene">
+        <div class="cube" id="cube">
+          <div class="face front" data-face="0">01 · VERSIÓN</div>
+          <div class="face back" data-face="1">02 · BLOQUE ANTERIOR</div>
+          <div class="face right" data-face="2">03 · RAÍZ DE MERKLE</div>
+          <div class="face left" data-face="3">04 · TIEMPO</div>
+          <div class="face top" data-face="4">05 · OBJETIVO (BITS)</div>
+          <div class="face bottom" data-face="5">06 · NONCE / PRUEBA DE TRABAJO</div>
+        </div>
+      </div>
+      <div class="controls">
+        <button id="motion">Pausar rotación</button>
+        <button id="reset">Restablecer ángulos</button>
+      </div>
+      <label>Ángulo X: <output id="ox">30°</output>
+        <input id="ax" type="range" min="0" max="360" value="30"></label>
+      <label>Ángulo Y: <output id="oy">55°</output>
+        <input id="ay" type="range" min="0" max="360" value="55"></label>
+      <label>Ángulo Z: <output id="oz">0°</output>
+        <input id="az" type="range" min="0" max="360" value="0"></label>
+      <label>Velocidad: <output id="os">1×</output>
+        <input id="speed" type="range" min="0" max="3" step=".25" value="1"></label>
+    </div>
+    <div class="panel">
+      <h2>MEMORIA DE PROGRESO</h2>
+      <p class="muted">Marca las piezas cuando hayas completado su tarea en el proyecto. Se guardan en este navegador.</p>
+      <div id="tasks"></div>
+      <p>Progreso visual</p>
+      <div class="metric" id="progress">0 / 6</div>
+      <p class="muted" id="saved">Guardado local pendiente</p>
+      <div class="controls">
+        <button id="clear">Reiniciar progreso</button>
+      </div>
+      <p class="muted">Este progreso es manual; no verifica un bloque de Bitcoin ni certifica trabajo de minería.</p>
+    </div>
+  </section>
+  <section class="panel" style="margin-top:16px">
+    <h2>BITAXE · MÉTRICAS EN TIEMPO REAL</h2>
+    <div class="grid">
+      <div><div class="muted">Hashrate actual</div><div class="metric" id="hash">--</div><div class="muted">GH/s</div></div>
+      <div><div class="muted">Temperatura ASIC</div><div class="metric" id="temp">--</div><div class="muted">°C</div></div>
+      <div><div class="muted">Altura de bloque observada</div><div class="metric" id="height">--</div></div>
+    </div>
+    <p class="muted" id="api">Consultando API local…</p>
+  </section>
+</main>
+<footer>TEOS · OPTIMIZAR. DISTRIBUIR. EVOLUCIONAR.</footer>
+<script>
+const $=id=>document.getElementById(id);
+const names=["Versión","Hash del bloque anterior","Raíz de Merkle","Tiempo","Objetivo de dificultad (bits)","Nonce y prueba de trabajo"];
+const key="teos.blockcore.progress.v1";
+let completed=[];
+try{const saved=JSON.parse(localStorage.getItem(key)||"[]");
+ if(Array.isArray(saved))completed=saved.filter(n=>Number.isInteger(n)&&n>=0&&n<6);
+}catch{}
+function renderTasks(){
+ $("tasks").replaceChildren();
+ names.forEach((name,i)=>{
+  const row=document.createElement("label");row.className="task";
+  const check=document.createElement("input");check.type="checkbox";check.checked=completed.includes(i);
+  check.setAttribute("aria-label","Marcar "+name+" como completado");
+  const title=document.createElement("span");title.textContent=name;
+  const state=document.createElement("small");state.className="state";
+  state.textContent=check.checked?"DORADO":"PENDIENTE";
+  check.addEventListener("change",()=>{
+   completed=check.checked?[...new Set([...completed,i])]:completed.filter(n=>n!==i);
+   try{localStorage.setItem(key,JSON.stringify(completed));$("saved").textContent="Progreso guardado en este navegador."}
+   catch{$("saved").textContent="No se pudo guardar; revisa el almacenamiento del navegador."}
+   renderTasks();
+  });
+  row.append(check,title,state);$("tasks").append(row);
+ });
+ document.querySelectorAll("[data-face]").forEach(face=>{
+  face.classList.toggle("done",completed.includes(Number(face.dataset.face)));
+ });
+ $("progress").textContent=completed.length+" / 6";
+}
+renderTasks();
+let running=true,angles=[30,55,0],speed=1,last=0;
+["ax","ay","az"].forEach((id,i)=>$(id).addEventListener("input",()=>{
+ angles[i]=Number($(id).value);$("o"+["x","y","z"][i]).textContent=angles[i]+"°";
+}));
+$("speed").addEventListener("input",()=>{$("os").textContent=$("speed").value+"×";speed=Number($("speed").value)});
+$("motion").onclick=()=>{running=!running;$("motion").textContent=running?"Pausar rotación":"Reanudar rotación"};
+$("reset").onclick=()=>{angles=[30,55,0];["ax","ay","az"].forEach((id,i)=>$(id).value=angles[i]);["x","y","z"].forEach((a,i)=>$("o"+a).textContent=angles[i]+"°")};
+$("clear").onclick=()=>{if(confirm("¿Reiniciar el progreso guardado de BLOCK CORE?")){completed=[];try{localStorage.removeItem(key)}catch{}renderTasks();$("saved").textContent="Progreso reiniciado."}};
+function animate(now){
+ if(last===0)last=now;const dt=Math.min((now-last)/16.67,3);last=now;
+ if(running){angles[0]+=0.22*speed*dt;angles[1]+=0.38*speed*dt;angles[2]+=0.13*speed*dt}
+ $("cube").style.transform=`rotateX(${angles[0]}deg) rotateY(${angles[1]}deg) rotateZ(${angles[2]}deg)`;
+ requestAnimationFrame(animate);
+}
+requestAnimationFrame(animate);
+async function refresh(){
+ try{
+  const r=await fetch("/api/status",{cache:"no-store"});if(!r.ok)throw Error("HTTP "+r.status);
+  const d=await r.json(),v=d.latest||{};
+  $("hash").textContent=Number.isFinite(Number(v.hashRate))?Number(v.hashRate).toLocaleString("es-EC",{maximumFractionDigits:1}):"--";
+  $("temp").textContent=Number.isFinite(Number(v.temp))?Number(v.temp).toLocaleString("es-EC",{maximumFractionDigits:1}):"--";
+  $("height").textContent=v.blockHeight??"--";
+  $("api").textContent=d.ok?"API local conectada · "+(d.age_seconds!=null?"muestra hace "+Math.round(d.age_seconds)+" s":"datos disponibles"):"API conectada, sin muestras";
+ }catch{$("api").textContent="API local no disponible; el cubo sigue funcionando."}
+}
+refresh();setInterval(refresh,5000);
+</script>
+</body>
+</html>
