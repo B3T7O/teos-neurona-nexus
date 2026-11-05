@@ -45,10 +45,20 @@ Sistema completo y operativo. Produce trabajo real:
 
 Web en http://127.0.0.1:8765
 
-## Hallazgo conocido (audit 2026-11-05)
+## Hallazgo abierto (audit 2026-11-05) - COBERTURA DECRECIENTE
 
-Cobertura eval ridge_live: 72.3% (10196/14099). Los ~3849 sin outcome
-son predicciones historicas (23 oct - 1 nov) que quedaron sin evaluar
-durante el desarrollo del learning_loop. El sistema actual evalua
-correctamente (cobertura diaria ~99% en dias recientes). No requiere
-accion; documentado por transparencia.
+Cobertura eval ridge_live por dia:
+  2026-10-30  79.8%
+  2026-10-31  79.1%
+  2026-11-01  71.8%
+  2026-11-02  70.2%
+  2026-11-03  63.7%
+  2026-11-04  62.9%
+  2026-11-05  48.3% (parcial, dia en curso)
+
+Tendencia: DECRECIENTE. El learning_loop evalua cada vez menos
+proporcion de las predicciones que genera. No es un hueco historico.
+Es una regresion activa. Investigacion pendiente.
+
+Sistema sigue funcionando (sigue prediciendo y evaluando), pero
+el backlog de predicciones sin evaluar crece.
