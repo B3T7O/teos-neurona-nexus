@@ -139,9 +139,14 @@ def check_quality(outcomes, preds, samples, results):
             f"APE: mean={mean(apes):.2f}% median={median(apes):.2f}% p95={p95:.2f}%",
             {"n": len(apes), "mean": round(mean(apes), 4), "median": round(median(apes), 4), "p95": round(p95, 4)}))
     if preds and outcomes:
-        ratio = len(outcomes) / len(preds) * 100
+        pred_ids = {r.get("prediction_id") for r in preds if r.get("prediction_id")}
+        outcome_ids = {r.get("prediction_id") for r in outcomes if r.get("prediction_id")}
+        matched = pred_ids & outcome_ids
+        ratio = (len(matched) / len(pred_ids) * 100) if pred_ids else 0
         sev = R.OK if ratio > 90 else (R.WARN if ratio > 70 else R.FAIL)
-        results.append(R(sev, "quality", f"Cobertura eval: {ratio:.1f}% ({len(outcomes)}/{len(preds)})"))
+        results.append(R(sev, "quality",
+            f"Cobertura eval (ridge_live): {ratio:.1f}% ({len(matched)}/{len(pred_ids)})",
+            {"matched": len(matched), "predictions": len(pred_ids), "outcomes_total": len(outcome_ids)}))
     if samples:
         acc = sum(r.get("sharesAccepted", 0) for r in samples)
         rej = sum(r.get("sharesRejected", 0) for r in samples)
