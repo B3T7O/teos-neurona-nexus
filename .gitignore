@@ -37,3 +37,8 @@ backups/
 # Backups de datos
 data/processed/backup_quarantine_*/
 data/processed/*.before_refresh_*
+
+# Logs de servicios (no versionar)
+logs/collector.log
+logs/scheduler.log
+logs/web-server.log
