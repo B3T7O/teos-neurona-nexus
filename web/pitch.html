@@ -303,6 +303,33 @@
     <div class="achievement"><span class="k">Última registrada</span><span class="v" id="mem-last" style="font-size:0.85em">--</span></div>
   </div>
 
+  <!-- Ranking Histórico por MAE -->
+  <div class="card" id="TARJETA_TREND">
+    <div class="card-title">🏆 Ranking Histórico por MAE</div>
+    <div class="achievement" style="font-size:0.85em">
+      <span class="k">Datos del</span>
+      <span class="v" id="trend-date">--</span>
+    </div>
+    <div id="trend-list" style="margin-top:8px">
+      <div class="achievement"><span class="k">Cargando...</span></div>
+    </div>
+    <div class="achievement" style="margin-top:10px;font-size:0.8em;color:var(--muted)">
+      <span class="k">Menor MAE = mejor precisión · 598 muestras por método</span>
+    </div>
+  </div>
+
+  <!-- Adaptación Controlada -->
+  <div class="card">
+    <div class="card-title">🧪 Adaptación Controlada</div>
+    <div class="achievement"><span class="k">Datos del</span><span class="v" id="adapt-date">--</span></div>
+    <div class="achievement"><span class="k">Modo</span><span class="v" id="adapt-mode" style="font-size:0.85em">--</span></div>
+    <div class="achievement"><span class="k">Decisiones evaluadas</span><span class="v gold" id="adapt-decisions">--</span></div>
+    <div class="achievement"><span class="k">Instantes completos</span><span class="v" id="adapt-instants">--</span></div>
+    <div class="achievement" style="margin-top:10px;font-size:0.75em;color:var(--muted);line-height:1.5">
+      <span>⚠️ Evaluación retrospectiva. No garantiza mejora futura ni modifica el predictor de producción.</span>
+    </div>
+  </div>
+
   <!-- Gráfico -->
   <div class="card" style="grid-column: 1 / -1;">
     <div class="card-title">📈 Hashrate — Últimos 80 Samples</div>
@@ -377,6 +404,27 @@ async function refresh() {
       } else {
         $('mem-last').textContent = '--';
       }
+    }
+
+
+    // Trend histórico
+    if (d.trend && d.trend.methods && d.trend.methods.length) {
+      const trendDate = (d.trend.generated_at || '').substring(0, 10);
+      $('trend-date').textContent = trendDate || '--';
+      const listHtml = d.trend.methods.map((m, i) => {
+        const marker = i === 0 ? '🥇 ' : '';
+        return `<div class="achievement"><span class="k">${marker}${m.method}</span><span class="v ${i === 0 ? 'green' : ''}">${m.mae_GHs.toFixed(2)} GH/s</span></div>`;
+      }).join('');
+      $('trend-list').innerHTML = listHtml;
+    }
+    
+    // Adaptación controlada
+    if (d.adaptation) {
+      const adaptDate = (d.adaptation.generated_at || '').substring(0, 10);
+      $('adapt-date').textContent = adaptDate || '--';
+      $('adapt-mode').textContent = d.adaptation.mode || '--';
+      $('adapt-decisions').textContent = (d.adaptation.decisions || 0).toLocaleString();
+      $('adapt-instants').textContent = (d.adaptation.complete_instants || 0).toLocaleString();
     }
 
     // Gráfico

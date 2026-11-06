@@ -421,6 +421,37 @@ class Handler(SimpleHTTPRequestHandler):
                         except Exception:
                             pass
                 
+                # 8. Trend histórico
+                trend = {"generated_at": None, "methods": [], "counts": {}}
+                trend_path = _ROOT / "data" / "processed" / "trend_memory_report.json"
+                if trend_path.exists():
+                    try:
+                        tr = _j.loads(trend_path.read_text())
+                        trend = {
+                            "generated_at": tr.get("generated_at_utc"),
+                            "methods": tr.get("methods_ranked_by_historical_mae", []),
+                            "counts": tr.get("counts", {}),
+                        }
+                    except Exception:
+                        pass
+                
+                # 9. Adaptación controlada
+                adaptation = {"generated_at": None, "mode": None, "decisions": 0, "complete_instants": 0}
+                adapt_path = _ROOT / "data" / "processed" / "controlled_adaptation_report.json"
+                if adapt_path.exists():
+                    try:
+                        ar = _j.loads(adapt_path.read_text())
+                        counts = ar.get("counts") or {}
+                        adaptation = {
+                            "generated_at": ar.get("generated_at"),
+                            "mode": ar.get("mode"),
+                            "decisions": counts.get("decisions_evaluated", 0),
+                            "complete_instants": counts.get("complete_instants", 0),
+                            "outcome_rows": counts.get("outcome_rows_loaded", 0),
+                        }
+                    except Exception:
+                        pass
+                
                 payload = _j.dumps({
                     "bitaxe": {"hashRate": btx.get("hashRate"), "temp": btx.get("temp"),
                                "vrTemp": btx.get("vrTemp"), "frequency": btx.get("frequency"),
@@ -433,6 +464,8 @@ class Handler(SimpleHTTPRequestHandler):
                     "optimization": opt,
                     "anomalies": anomalies,
                     "memory": memory,
+                    "trend": trend,
+                    "adaptation": adaptation,
                     "chart": chart,
                 }).encode("utf-8")
                 
