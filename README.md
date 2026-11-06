@@ -35,3 +35,5 @@ mediante Bitaxe.
 - logs/: registros operativos.
 - tests/: pruebas.
 - docs/: documentación técnica.
+
+- **Hardware control verified:** The controller successfully downgraded the Bitaxe from 525 MHz to 500 MHz, verified the change (temperature dropped by 0.4°C), and safely restored the original configuration. Logs are available in `data/raw/bitaxe_control_test.jsonl`.
