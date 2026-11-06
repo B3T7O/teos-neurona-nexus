@@ -1,0 +1,472 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TEOS Neurona Nexus — Live</title>
+<style>
+  :root {
+    --bg: #050810;
+    --panel: rgba(12, 20, 34, 0.85);
+    --border: #1a2942;
+    --accent: #00c8ff;
+    --green: #00ff9d;
+    --text: #e6f1ff;
+    --muted: #6b8ba8;
+    --font: 'SF Mono', 'Consolas', 'Monaco', monospace;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font);
+    min-height: 100vh;
+    overflow-x: hidden;
+    background-image: 
+      radial-gradient(ellipse at 50% 0%, rgba(0, 200, 255, 0.08) 0%, transparent 60%),
+      linear-gradient(rgba(26, 41, 66, 0.15) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(26, 41, 66, 0.15) 1px, transparent 1px);
+    background-size: 100% 100%, 40px 40px, 40px 40px;
+  }
+  
+  /* Header */
+  header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: clamp(12px, 2vw, 24px) clamp(16px, 3vw, 40px);
+    border-bottom: 1px solid var(--border);
+    background: rgba(5, 8, 16, 0.9);
+    backdrop-filter: blur(10px);
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+  .logo {
+    font-size: clamp(18px, 2.5vw, 32px);
+    font-weight: 900;
+    letter-spacing: 3px;
+    color: var(--accent);
+    text-shadow: 0 0 20px rgba(0, 200, 255, 0.5);
+  }
+  .logo span { color: var(--text); font-weight: 400; font-size: 0.6em; letter-spacing: 2px; margin-left: 12px; opacity: 0.7; }
+  .status-pill {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 16px;
+    background: rgba(0, 255, 157, 0.1);
+    border: 1px solid var(--green);
+    border-radius: 20px;
+    font-size: clamp(10px, 1.2vw, 13px);
+    color: var(--green);
+  }
+  .status-pill .dot {
+    width: 8px; height: 8px; border-radius: 50%;
+    background: var(--green);
+    box-shadow: 0 0 10px var(--green);
+    animation: pulse 1.5s infinite;
+  }
+  
+  /* Layout principal */
+  main {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 320px), 1fr));
+    gap: clamp(12px, 1.5vw, 20px);
+    padding: clamp(12px, 2vw, 28px);
+    max-width: 1920px;
+    margin: 0 auto;
+  }
+  
+  /* Tarjetas */
+  .card {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: clamp(16px, 2vw, 24px);
+    backdrop-filter: blur(10px);
+    position: relative;
+    overflow: hidden;
+    transition: border-color 0.4s, box-shadow 0.4s;
+  }
+  .card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, transparent, var(--accent), transparent);
+    opacity: 0.5;
+  }
+  .card.neuron-glow { border-color: var(--green); box-shadow: 0 0 40px rgba(0, 255, 157, 0.15); }
+  .card.neuron-glow::before { background: linear-gradient(90deg, transparent, var(--green), transparent); }
+  
+  .card-title {
+    font-size: clamp(10px, 1vw, 12px);
+    color: var(--muted);
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .card-title::before { content: '◢'; color: var(--accent); font-size: 0.8em; }
+  
+  /* Hero: badge de la neurona */
+  .hero-neuron {
+    grid-column: 1 / -1;
+    text-align: center;
+    padding: clamp(24px, 4vw, 48px) clamp(16px, 3vw, 40px);
+    position: relative;
+  }
+  .neuron-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: clamp(12px, 2vw, 20px);
+    padding: clamp(14px, 2vw, 24px) clamp(24px, 4vw, 48px);
+    border: 2px solid var(--green);
+    border-radius: 999px;
+    background: rgba(0, 255, 157, 0.05);
+    box-shadow: 0 0 60px rgba(0, 255, 157, 0.3), inset 0 0 30px rgba(0, 255, 157, 0.05);
+    animation: breathe 3s ease-in-out infinite;
+  }
+  .neuron-badge .icon { font-size: clamp(32px, 5vw, 56px); }
+  .neuron-badge .label {
+    font-size: clamp(20px, 3.5vw, 40px);
+    font-weight: 900;
+    letter-spacing: 4px;
+    color: var(--green);
+    text-shadow: 0 0 30px var(--green);
+  }
+  .neuron-badge .detail {
+    font-size: clamp(11px, 1.4vw, 15px);
+    color: var(--muted);
+    letter-spacing: 1px;
+    margin-top: 6px;
+  }
+  
+  /* Métricas grandes */
+  .metric {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+  .metric .value {
+    font-size: clamp(28px, 4vw, 48px);
+    font-weight: 900;
+    color: var(--accent);
+    text-shadow: 0 0 20px rgba(0, 200, 255, 0.4);
+    line-height: 1;
+  }
+  .metric .unit {
+    font-size: clamp(11px, 1.2vw, 14px);
+    color: var(--muted);
+    letter-spacing: 1.5px;
+  }
+  
+  /* Grid interno de métricas (Bitaxe) */
+  .metric-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+    gap: clamp(12px, 2vw, 24px);
+    margin-top: 8px;
+  }
+  
+  /* Gráfico */
+  #chart-canvas {
+    width: 100%;
+    height: clamp(140px, 18vw, 220px);
+    display: block;
+  }
+  
+  /* Tabla de logros */
+  .achievement {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    padding: clamp(8px, 1vw, 12px) 0;
+    border-bottom: 1px dashed rgba(26, 41, 66, 0.6);
+    font-size: clamp(12px, 1.3vw, 15px);
+  }
+  .achievement:last-child { border-bottom: none; }
+  .achievement .k { color: var(--muted); }
+  .achievement .v { color: var(--text); font-weight: 700; }
+  .achievement .v.green { color: var(--green); }
+  .achievement .v.gold { color: #ffd700; }
+  
+  /* Footer */
+  footer {
+    text-align: center;
+    padding: clamp(16px, 2vw, 28px);
+    color: var(--muted);
+    font-size: clamp(10px, 1.1vw, 13px);
+    letter-spacing: 4px;
+    border-top: 1px solid var(--border);
+    margin-top: 20px;
+  }
+  
+  /* Animaciones */
+  @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.4; } }
+  @keyframes breathe { 0%,100% { box-shadow: 0 0 60px rgba(0, 255, 157, 0.3); } 50% { box-shadow: 0 0 100px rgba(0, 255, 157, 0.5); } }
+  
+  /* Adaptaciones TV / pantallas grandes */
+  @media (min-width: 1920px) {
+    main { max-width: 2200px; }
+    .card { padding: 32px; }
+  }
+  
+  /* Adaptaciones móvil */
+  @media (max-width: 640px) {
+    header { flex-direction: column; gap: 10px; }
+    .logo span { display: none; }
+    .card { padding: 14px; border-radius: 10px; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">TEOS <span>NEURONA NEXUS</span></div>
+  <div class="status-pill">
+    <div class="dot"></div>
+    <span id="status-text">CONECTANDO...</span>
+  </div>
+</header>
+
+<main>
+  <!-- Hero: Neurona -->
+  <div class="card hero-neuron">
+    <div class="neuron-badge" id="neuron-badge">
+      <div class="icon" id="neuron-icon">🧠</div>
+      <div>
+        <div class="label" id="neuron-label">INICIANDO</div>
+        <div class="detail" id="neuron-detail">Leyendo estado...</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Bitaxe en vivo -->
+  <div class="card">
+    <div class="card-title">⚡ Bitaxe Gamma 602 — En Vivo</div>
+    <div class="metric-grid">
+      <div class="metric">
+        <div class="value" id="hashrate">--</div>
+        <div class="unit">GH/s HASHRATE</div>
+      </div>
+      <div class="metric">
+        <div class="value" id="temp" style="color:#00ff9d">--</div>
+        <div class="unit">°C ASIC</div>
+      </div>
+      <div class="metric">
+        <div class="value" id="vrtemp" style="color:#ffb800">--</div>
+        <div class="unit">°C VR</div>
+      </div>
+      <div class="metric">
+        <div class="value" id="freq" style="color:#00c8ff">--</div>
+        <div class="unit">MHz</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Logros verificados -->
+  <div class="card">
+    <div class="card-title">🏆 Logros Verificados</div>
+    <div class="achievement"><span class="k">Predicciones validadas</span><span class="v gold" id="pred-total">--</span></div>
+    <div class="achievement"><span class="k">Método ganador</span><span class="v" id="pred-method">--</span></div>
+    <div class="achievement"><span class="k">APE medio</span><span class="v green" id="pred-ape">--</span></div>
+    <div class="achievement"><span class="k">Mejora vs baseline</span><span class="v green" id="pred-improve">--</span></div>
+  </div>
+
+  <!-- Optimización -->
+  <div class="card">
+    <div class="card-title">⚙️ Optimización Aplicada</div>
+    <div class="achievement"><span class="k">Voltaje</span><span class="v"><span id="v-before">--</span> → <span id="v-after" style="color:var(--green)">--</span> mV</span></div>
+    <div class="achievement"><span class="k">Eficiencia J/TH</span><span class="v"><span id="jth-before">--</span> → <span id="jth-after" style="color:var(--green)">--</span></span></div>
+    <div class="achievement"><span class="k">Ganancia energética</span><span class="v green" id="eff-gain">--</span></div>
+    <div class="achievement"><span class="k">Shares aceptados</span><span class="v" id="shares-acc">--</span></div>
+    <div class="achievement"><span class="k">Shares rechazados</span><span class="v" id="shares-rej" style="color:#ff3158">--</span></div>
+  </div>
+
+  <!-- Anomalías -->
+  <div class="card" id="TARJETA_ANOMALIAS">
+    <div class="card-title">⚠️ Anomalías y Saltos</div>
+    <div class="achievement"><span class="k">Eventos registrados</span><span class="v gold" id="anom-total">--</span></div>
+    <div class="achievement"><span class="k">Último evento</span><span class="v" id="anom-last" style="font-size:0.9em">--</span></div>
+    <div class="achievement"><span class="k">Estado del detector</span><span class="v green">ACTIVO</span></div>
+  </div>
+
+  <!-- Memoria -->
+  <div class="card">
+    <div class="card-title">🧠 Memoria de Experiencias</div>
+    <div class="achievement"><span class="k">Experiencias totales</span><span class="v gold" id="mem-total">--</span></div>
+    <div class="achievement"><span class="k">Métodos distintos</span><span class="v" id="mem-methods">--</span></div>
+    <div class="achievement"><span class="k">Última registrada</span><span class="v" id="mem-last" style="font-size:0.85em">--</span></div>
+  </div>
+
+  <!-- Gráfico -->
+  <div class="card" style="grid-column: 1 / -1;">
+    <div class="card-title">📈 Hashrate — Últimos 80 Samples</div>
+    <canvas id="chart-canvas"></canvas>
+  </div>
+</main>
+
+<footer>TEOS · OPTIMIZE · DISTRIBUTE · EVOLVE</footer>
+
+<script>
+const $ = (id) => document.getElementById(id);
+
+async function refresh() {
+  try {
+    const r = await fetch('/api/pitch-data', { cache: 'no-store' });
+    if (!r.ok) return;
+    const d = await r.json();
+    
+    // Bitaxe
+    if (d.bitaxe) {
+      $('hashrate').textContent = d.bitaxe.hashRate ? Math.round(d.bitaxe.hashRate) : '--';
+      $('temp').textContent = d.bitaxe.temp ? d.bitaxe.temp.toFixed(1) : '--';
+      $('vrtemp').textContent = d.bitaxe.vrTemp ? d.bitaxe.vrTemp : '--';
+      $('freq').textContent = d.bitaxe.frequency || '--';
+      $('shares-acc').textContent = (d.bitaxe.sharesAccepted || 0).toLocaleString();
+      $('shares-rej').textContent = (d.bitaxe.sharesRejected || 0).toLocaleString();
+    }
+    
+    // Neurona
+    if (d.neuron) {
+      $('neuron-label').textContent = d.neuron.label || 'IDLE';
+      $('neuron-detail').textContent = d.neuron.detail || '';
+      $('neuron-label').style.color = d.neuron.color || '#00ff9d';
+      $('neuron-badge').style.borderColor = d.neuron.color || '#00ff9d';
+      $('neuron-badge').style.boxShadow = `0 0 60px ${d.neuron.color}44, inset 0 0 30px ${d.neuron.color}11`;
+      const icons = { learning: '🧠', idle: '💤', jump: '⚡', anomaly: '⚠️', record: '🏆' };
+      $('neuron-icon').textContent = icons[d.neuron.state] || '🧠';
+      $('status-text').textContent = 'SISTEMA OPERATIVO';
+    }
+    
+    // Validación
+    if (d.validation) {
+      $('pred-total').textContent = (d.validation.total_predictions || 0).toLocaleString();
+      $('pred-method').textContent = d.validation.best_method || '--';
+      $('pred-ape').textContent = (d.validation.ape_mean || 0).toFixed(2) + '%';
+      $('pred-improve').textContent = '+' + (d.validation.improvement_pct || 0).toFixed(1) + '%';
+    }
+    
+    // Optimización
+    if (d.optimization) {
+      $('v-before').textContent = d.optimization.voltage_before;
+      $('v-after').textContent = d.optimization.voltage_after;
+      $('jth-before').textContent = d.optimization.jth_before;
+      $('jth-after').textContent = d.optimization.jth_after;
+      $('eff-gain').textContent = '-' + d.optimization.efficiency_pct + '% consumo';
+    }
+    
+
+    // Anomalías
+    if (d.anomalies) {
+      $('anom-total').textContent = d.anomalies.total || 0;
+      $('anom-last').textContent = d.anomalies.last ? d.anomalies.last.substring(0, 40) : 'Sin eventos recientes';
+    }
+    
+    // Memoria
+    if (d.memory) {
+      $('mem-total').textContent = (d.memory.total || 0).toLocaleString();
+      $('mem-methods').textContent = d.memory.methods || 0;
+      if (d.memory.last_ts) {
+        const ts = d.memory.last_ts.substring(11, 16);
+        $('mem-last').textContent = ts + ' UTC';
+      } else {
+        $('mem-last').textContent = '--';
+      }
+    }
+
+    // Gráfico
+    if (d.chart && d.chart.length > 1) drawChart(d.chart);
+    
+  } catch (e) {
+    $('status-text').textContent = 'RECONECTANDO...';
+  }
+}
+
+function drawChart(data) {
+  const canvas = $('chart-canvas');
+  const dpr = window.devicePixelRatio || 1;
+  const rect = canvas.getBoundingClientRect();
+  canvas.width = rect.width * dpr;
+  canvas.height = rect.height * dpr;
+  const ctx = canvas.getContext('2d');
+  ctx.scale(dpr, dpr);
+  
+  const W = rect.width, H = rect.height;
+  const pad = { l: 40, r: 20, t: 20, b: 30 };
+  const cw = W - pad.l - pad.r;
+  const ch = H - pad.t - pad.b;
+  
+  const values = data.map(x => x.h);
+  const min = Math.min(...values) * 0.98;
+  const max = Math.max(...values) * 1.02;
+  
+  ctx.clearRect(0, 0, W, H);
+  
+  // Grid
+  ctx.strokeStyle = 'rgba(26, 41, 66, 0.5)';
+  ctx.lineWidth = 1;
+  for (let i = 0; i <= 4; i++) {
+    const y = pad.t + (ch / 4) * i;
+    ctx.beginPath(); ctx.moveTo(pad.l, y); ctx.lineTo(W - pad.r, y); ctx.stroke();
+    ctx.fillStyle = '#6b8ba8';
+    ctx.font = '10px monospace';
+    ctx.textAlign = 'right';
+    const val = max - ((max - min) / 4) * i;
+    ctx.fillText(Math.round(val), pad.l - 6, y + 3);
+  }
+  
+  // Línea
+  const step = cw / (data.length - 1);
+  const pts = data.map((p, i) => ({
+    x: pad.l + i * step,
+    y: pad.t + ch - ((p.h - min) / (max - min)) * ch
+  }));
+  
+  // Área bajo la curva
+  const grad = ctx.createLinearGradient(0, pad.t, 0, H - pad.b);
+  grad.addColorStop(0, 'rgba(0, 200, 255, 0.3)');
+  grad.addColorStop(1, 'rgba(0, 200, 255, 0)');
+  ctx.fillStyle = grad;
+  ctx.beginPath();
+  ctx.moveTo(pts[0].x, H - pad.b);
+  pts.forEach(p => ctx.lineTo(p.x, p.y));
+  ctx.lineTo(pts[pts.length - 1].x, H - pad.b);
+  ctx.closePath();
+  ctx.fill();
+  
+  // Línea
+  ctx.strokeStyle = '#00c8ff';
+  ctx.lineWidth = 2;
+  ctx.shadowBlur = 10;
+  ctx.shadowColor = '#00c8ff';
+  ctx.beginPath();
+  pts.forEach((p, i) => i === 0 ? ctx.moveTo(p.x, p.y) : ctx.lineTo(p.x, p.y));
+  ctx.stroke();
+  ctx.shadowBlur = 0;
+  
+  // Último punto
+  const last = pts[pts.length - 1];
+  ctx.fillStyle = '#00ff9d';
+  ctx.shadowBlur = 15;
+  ctx.shadowColor = '#00ff9d';
+  ctx.beginPath(); ctx.arc(last.x, last.y, 4, 0, Math.PI * 2); ctx.fill();
+  ctx.shadowBlur = 0;
+}
+
+// Refrescar cada 5 segundos
+refresh();
+setInterval(refresh, 5000);
+window.addEventListener('resize', () => {
+  fetch('/api/pitch-data', {cache: 'no-store'}).then(r => r.json()).then(d => {
+    if (d.chart) drawChart(d.chart);
+  }).catch(() => {});
+});
+</script>
+
+</body>
+</html>
