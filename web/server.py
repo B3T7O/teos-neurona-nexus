@@ -291,7 +291,43 @@ class Handler(SimpleHTTPRequestHandler):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, directory=str(WEB), **kwargs)
 
+    # SECURITY GUARD V2 - override de end_headers (forma segura)
+    def end_headers(self):
+        try:
+            from security import security_headers
+            for k, v in security_headers().items():
+                self.send_header(k, v)
+        except Exception:
+            pass
+        super().end_headers()
+
     def do_GET(self):
+        # SECURITY GUARD V2 - validacion al inicio de do_GET
+        try:
+            from security import check_rate_limit, validate_host, is_blocked_path, log_block
+            client_ip = self.client_address[0] if self.client_address else "unknown"
+            host = self.headers.get("Host", "")
+            if not validate_host(host):
+                log_block(client_ip, self.path, "bad_host")
+                self.send_response(403)
+                self.send_header("Content-Length", "0")
+                self.end_headers()
+                return
+            if not check_rate_limit(client_ip):
+                log_block(client_ip, self.path, "rate_limit")
+                self.send_response(429)
+                self.send_header("Retry-After", "60")
+                self.send_header("Content-Length", "0")
+                self.end_headers()
+                return
+            if is_blocked_path(self.path):
+                log_block(client_ip, self.path, "blocked_path")
+                self.send_response(404)
+                self.send_header("Content-Length", "0")
+                self.end_headers()
+                return
+        except Exception:
+            pass
         # FAST /api/services - consulta systemd real
         if self.path.startswith("/api/services"):
             try:
