@@ -31,6 +31,8 @@
   
   /* Header */
   header {
+    position: relative;
+    z-index: 1;
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -70,6 +72,8 @@
   
   /* Layout principal */
   main {
+    position: relative;
+    z-index: 1;
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(min(100%, 320px), 1fr));
     gap: clamp(12px, 1.5vw, 20px);
@@ -514,6 +518,75 @@ window.addEventListener('resize', () => {
     if (d.chart) drawChart(d.chart);
   }).catch(() => {});
 });
+</script>
+
+
+<!-- SHOOTING_STARS -->
+<canvas id="stars-canvas" aria-hidden="true" style="position:fixed;top:0;left:0;width:100vw;height:100vh;pointer-events:none;z-index:0;opacity:0.85"></canvas>
+<script>
+(function(){
+  if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  const canvas = document.getElementById('stars-canvas');
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+  const dpr = window.devicePixelRatio || 1;
+  let W, H;
+  function resize() {
+    W = window.innerWidth; H = window.innerHeight;
+    canvas.width = W * dpr; canvas.height = H * dpr;
+    canvas.style.width = W + 'px'; canvas.style.height = H + 'px';
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  }
+  resize();
+  window.addEventListener('resize', resize);
+  const COLORS = ['#ff8c42', '#ffb347', '#ffa500', '#ff7f2a', '#ffd580'];
+  const MAX_STARS = 6;
+  const stars = [];
+  function spawn() {
+    if (stars.length >= MAX_STARS) return;
+    const fromLeft = Math.random() < 0.5;
+    const startX = fromLeft ? -80 : W + 80;
+    const startY = Math.random() * H * 0.75;
+    const baseAngle = fromLeft ? (0.35 + Math.random() * 0.25) : (Math.PI - 0.35 - Math.random() * 0.25);
+    const speed = 5 + Math.random() * 5;
+    stars.push({
+      x: startX, y: startY,
+      vx: Math.cos(baseAngle) * speed,
+      vy: Math.sin(baseAngle) * speed,
+      len: 100 + Math.random() * 140,
+      life: 0, maxLife: 180 + Math.random() * 120,
+      color: COLORS[Math.floor(Math.random() * COLORS.length)],
+      width: 1.5 + Math.random() * 1.5
+    });
+  }
+  for (let i = 0; i < MAX_STARS; i++) setTimeout(spawn, i * 900 + Math.random() * 400);
+  function draw() {
+    ctx.clearRect(0, 0, W, H);
+    for (let i = stars.length - 1; i >= 0; i--) {
+      const s = stars[i];
+      s.x += s.vx; s.y += s.vy; s.life++;
+      const speed = Math.hypot(s.vx, s.vy) || 1;
+      const tailX = s.x - (s.vx / speed) * s.len;
+      const tailY = s.y - (s.vy / speed) * s.len;
+      const grad = ctx.createLinearGradient(tailX, tailY, s.x, s.y);
+      grad.addColorStop(0, 'rgba(255,140,66,0)');
+      grad.addColorStop(0.6, 'rgba(255,140,66,0.4)');
+      grad.addColorStop(1, s.color);
+      ctx.strokeStyle = grad;
+      ctx.lineWidth = s.width;
+      ctx.lineCap = 'round';
+      ctx.beginPath(); ctx.moveTo(tailX, tailY); ctx.lineTo(s.x, s.y); ctx.stroke();
+      ctx.shadowBlur = 18; ctx.shadowColor = s.color;
+      ctx.fillStyle = s.color;
+      ctx.beginPath(); ctx.arc(s.x, s.y, 2.2, 0, Math.PI * 2); ctx.fill();
+      ctx.shadowBlur = 0;
+      if (s.x < -200 || s.x > W + 200 || s.y > H + 200 || s.life > s.maxLife) stars.splice(i, 1);
+    }
+    requestAnimationFrame(draw);
+  }
+  draw();
+  setInterval(() => { if (stars.length < MAX_STARS && Math.random() < 0.7) spawn(); }, 1600);
+})();
 </script>
 
 </body>
