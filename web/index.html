@@ -2629,22 +2629,22 @@ if (anomalies) {
         <strong>ESTADOS ACTIVOS · TEOS</strong>
         <span id="teos-services-updated">VERIFICANDO…</span>
       </div>
-      <div class="teos-service-item" data-service="teos-neurona-api.service">
+      <div class="teos-service-item" data-service="teos-web.service">
         <span class="teos-service-led"></span>
         <div class="teos-service-copy"><strong>API NEURONA</strong>
-          <small>teos-neurona-api.service</small></div>
+          <small>teos-web.service</small></div>
         <span class="teos-service-state">CONSULTANDO</span>
       </div>
-      <div class="teos-service-item" data-service="teos-nexus-collector.service">
+      <div class="teos-service-item" data-service="teos-colector.service">
         <span class="teos-service-led"></span>
         <div class="teos-service-copy"><strong>RECOLECTOR</strong>
-          <small>teos-nexus-collector.service</small></div>
+          <small>teos-colector.service</small></div>
         <span class="teos-service-state">CONSULTANDO</span>
       </div>
-      <div class="teos-service-item" data-service="teos-neurona-scheduler.service">
+      <div class="teos-service-item" data-service="teos-scheduler.service">
         <span class="teos-service-led"></span>
         <div class="teos-service-copy"><strong>PLANIFICADOR</strong>
-          <small>teos-neurona-scheduler.service</small></div>
+          <small>teos-scheduler.service</small></div>
         <span class="teos-service-state">CONSULTANDO</span>
       </div>
       <div class="teos-services-foot">Estado consultado a systemd · actualización automática cada 5 s</div>`;
@@ -2652,9 +2652,9 @@ if (anomalies) {
   row.appendChild(panel);
 
   const units = [
-    "teos-neurona-api.service",
-    "teos-nexus-collector.service",
-    "teos-neurona-scheduler.service"
+    "teos-web.service",
+    "teos-colector.service",
+    "teos-scheduler.service"
   ];
 
   function showState(unit, raw) {
@@ -2699,9 +2699,18 @@ if (anomalies) {
 })();
 </script>
 
+
 <script>
 // TEOS MOOD BADGE START
 (function(){
+  var ESTADOS = {
+    learning: { icon: '\u{1F9E0}', anim: 'pulse-green' },
+    idle:     { icon: '\u{1F4A4}', anim: '' },
+    jump:     { icon: '\u26A1',     anim: 'pulse-yellow' },
+    anomaly:  { icon: '\u26A0\uFE0F', anim: 'shake-red' },
+    record:   { icon: '\u{1F3C6}', anim: 'pulse-gold' }
+  };
+
   function ensureBadge() {
     var panel = document.getElementById('prediction-lab');
     if (!panel) return null;
@@ -2709,11 +2718,49 @@ if (anomalies) {
     if (existing) return existing;
     var b = document.createElement('div');
     b.id = 'neuron-mood';
-    b.style.cssText = 'display:flex;align-items:center;gap:12px;padding:12px 16px;margin:0 0 14px;background:rgba(12,20,34,0.9);border:1px solid #1a2942;border-radius:10px;font-family:ui-monospace,monospace;font-size:13px;transition:border-color 0.4s,box-shadow 0.4s';
-    b.innerHTML = '<div id="neuron-dot" style="width:14px;height:14px;border-radius:50%;background:#00c8ff;box-shadow:0 0 10px #00c8ff;transition:background 0.4s,box-shadow 0.4s;flex-shrink:0"></div><div style="flex:1;min-width:0"><div id="neuron-label" style="font-weight:700;letter-spacing:1.5px;color:#00c8ff;transition:color 0.4s;font-size:12px">INICIANDO...</div><div id="neuron-detail" style="color:#8fa9c9;font-size:11px;margin-top:3px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap"></div></div>';
+    b.style.cssText = [
+      'display:flex','align-items:center','gap:16px',
+      'padding:20px 24px','margin:0 0 20px',
+      'background:linear-gradient(135deg, rgba(12,20,34,0.95), rgba(20,30,50,0.95))',
+      'border:2px solid #1a2942','border-radius:14px',
+      'font-family:ui-monospace,monospace',
+      'transition:all 0.4s ease',
+      'position:relative','overflow:hidden'
+    ].join(';');
+    b.innerHTML =
+      '<div id="neuron-dot" style="width:20px;height:20px;border-radius:50%;background:#00c8ff;box-shadow:0 0 20px #00c8ff;flex-shrink:0;transition:all 0.4s"></div>' +
+      '<div id="neuron-icon" style="font-size:32px;flex-shrink:0;transition:all 0.4s">\u{1F4A4}</div>' +
+      '<div style="flex:1;min-width:0">' +
+        '<div id="neuron-label" style="font-weight:900;letter-spacing:3px;color:#00c8ff;font-size:20px;transition:all 0.4s">INICIANDO</div>' +
+        '<div id="neuron-detail" style="color:#8fa9c9;font-size:13px;margin-top:6px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap"></div>' +
+      '</div>' +
+      '<div id="neuron-time" style="color:#5a7a9a;font-size:11px;text-align:right;flex-shrink:0"></div>';
     panel.insertBefore(b, panel.firstChild);
+
+    // Inyectar CSS de animaciones (una sola vez)
+    if (!document.getElementById('neuron-mood-css')) {
+      var css = document.createElement('style');
+      css.id = 'neuron-mood-css';
+      css.textContent = `
+        @keyframes pulse-glow { 0%,100% { box-shadow: 0 0 20px var(--c); } 50% { box-shadow: 0 0 40px var(--c), 0 0 60px var(--c); } }
+        @keyframes shake { 0%,100% { transform: translateX(0); } 25% { transform: translateX(-4px); } 75% { transform: translateX(4px); } }
+        #neuron-mood.learning { --c: #00ff9d; }
+        #neuron-mood.learning #neuron-dot { animation: pulse-glow 1.5s infinite; }
+        #neuron-mood.record { --c: #ffd700; }
+        #neuron-mood.record #neuron-dot { animation: pulse-glow 0.8s infinite; }
+        #neuron-mood.jump { --c: #ffb800; }
+        #neuron-mood.jump #neuron-dot { animation: pulse-glow 0.5s infinite; }
+        #neuron-mood.anomaly { --c: #ff3158; }
+        #neuron-mood.anomaly { animation: shake 0.4s infinite; }
+        #neuron-mood.anomaly #neuron-dot { animation: pulse-glow 0.3s infinite; }
+      `;
+      document.head.appendChild(css);
+    }
     return b;
   }
+
+  var lastChange = Date.now();
+
   async function refresh() {
     try {
       var r = await fetch('/api/neuron-state', {cache:'no-store'});
@@ -2723,15 +2770,35 @@ if (anomalies) {
       var dot = b.querySelector('#neuron-dot');
       var lbl = b.querySelector('#neuron-label');
       var det = b.querySelector('#neuron-detail');
+      var ico = b.querySelector('#neuron-icon');
+      var tm  = b.querySelector('#neuron-time');
+
+      // Resetear clases
+      b.className = '';
+      if (s.state) b.classList.add(s.state);
+
+      var est = ESTADOS[s.state] || ESTADOS.idle;
       dot.style.background = s.color;
-      dot.style.boxShadow = '0 0 12px ' + s.color;
-      lbl.textContent = s.label; lbl.style.color = s.color;
+      dot.style.boxShadow = '0 0 25px ' + s.color;
+      lbl.textContent = s.label;
+      lbl.style.color = s.color;
+      lbl.style.textShadow = '0 0 15px ' + s.color + '88';
       det.textContent = s.detail || '';
+      ico.textContent = est.icon;
       b.style.borderColor = s.color;
-      b.style.boxShadow = '0 0 20px ' + s.color + '22';
-    } catch(e){}
+      b.style.boxShadow = '0 0 30px ' + s.color + '44';
+
+      // Contador de tiempo
+      if (b.dataset.lastState !== s.state) {
+        b.dataset.lastState = s.state;
+        lastChange = Date.now();
+      }
+      var seg = Math.floor((Date.now() - lastChange) / 1000);
+      tm.textContent = seg < 60 ? ('hace ' + seg + 's') : ('hace ' + Math.floor(seg/60) + 'min');
+    } catch(e) {}
   }
-  setInterval(refresh, 3000);
+
+  setInterval(refresh, 5000);
   setInterval(ensureBadge, 1500);
   setTimeout(refresh, 500);
 })();

@@ -292,6 +292,31 @@ class Handler(SimpleHTTPRequestHandler):
         super().__init__(*args, directory=str(WEB), **kwargs)
 
     def do_GET(self):
+        # FAST /api/services - consulta systemd real
+        if self.path.startswith("/api/services"):
+            try:
+                import subprocess as _sp
+                real = {}
+                for name in ["teos-web.service", "teos-colector.service", "teos-scheduler.service"]:
+                    try:
+                        r = _sp.run(["systemctl", "--user", "is-active", name],
+                                    capture_output=True, text=True, timeout=2)
+                        real[name] = r.stdout.strip() or "unknown"
+                    except Exception:
+                        real[name] = "unknown"
+                payload = json.dumps({"services": real}).encode("utf-8")
+                self.send_response(200)
+                self.send_header("Content-Type", "application/json; charset=utf-8")
+                self.send_header("Content-Length", str(len(payload)))
+                self.end_headers()
+                self.wfile.write(payload)
+            except Exception as e:
+                try:
+                    self.send_response(200)
+                    self.end_headers()
+                except Exception:
+                    pass
+            return
         # FAST /api/status - lectura directa del ultimo sample
         if self.path.startswith("/api/status"):
             try:
