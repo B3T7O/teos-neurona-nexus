@@ -1,0 +1,48 @@
+{
+  "total_lines": 71951,
+  "parse_errors": 1,
+  "baseline_method": "ultimo_hashrate",
+  "baseline_ape_mean": 3.7359,
+  "methods": {
+    "adaptativo_neurona": {
+      "n": 12678,
+      "ape_mean": 2.2973,
+      "ape_median": 1.9194,
+      "ape_p95": 5.7313,
+      "mae_ghs": 24.576,
+      "rmse_ghs": 30.9508
+    },
+    "media_ultimas_5": {
+      "n": 14818,
+      "ape_mean": 2.9103,
+      "ape_median": 2.084,
+      "ape_p95": 6.1776,
+      "mae_ghs": 36.5048,
+      "rmse_ghs": 715.0223
+    },
+    "referencia_10m": {
+      "n": 14818,
+      "ape_mean": 2.6147,
+      "ape_median": 1.9051,
+      "ape_p95": 5.6669,
+      "mae_ghs": 33.366,
+      "rmse_ghs": 681.8911
+    },
+    "referencia_1h": {
+      "n": 14818,
+      "ape_mean": 2.6085,
+      "ape_median": 1.9096,
+      "ape_p95": 5.7414,
+      "mae_ghs": 33.2854,
+      "rmse_ghs": 667.0033
+    },
+    "ultimo_hashrate": {
+      "n": 14818,
+      "ape_mean": 3.7359,
+      "ape_median": 2.7306,
+      "ape_p95": 7.752,
+      "mae_ghs": 45.1827,
+      "rmse_ghs": 938.9769
+    }
+  }
+}
