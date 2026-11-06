@@ -334,6 +334,25 @@
     </div>
   </div>
 
+  <!-- Audit Engine -->
+  <div class="card" id="TARJETA_AUDIT">
+    <div class="card-title">🛡️ TEOS Audit Engine</div>
+    <div class="achievement">
+      <span class="k">Veredicto</span>
+      <span class="v" id="audit-verdict" style="font-weight:900;font-size:1.05em">--</span>
+    </div>
+    <div class="achievement"><span class="k">Chequeos OK</span><span class="v green" id="audit-ok">--</span></div>
+    <div class="achievement"><span class="k">Advertencias</span><span class="v" id="audit-warn" style="color:#ffb800">--</span></div>
+    <div class="achievement"><span class="k">Fallos</span><span class="v" id="audit-fail" style="color:#ff3158">--</span></div>
+    <div class="achievement" style="font-size:0.8em;color:var(--muted)">
+      <span class="k">Última revisión</span>
+      <span class="v" id="audit-age" style="font-weight:400">--</span>
+    </div>
+    <div class="achievement" style="font-size:0.7em;color:var(--muted);margin-top:6px">
+      <span>Read-only · verifica salud, frescura y calidad de datos</span>
+    </div>
+  </div>
+
   <!-- Gráfico -->
   <div class="card" style="grid-column: 1 / -1;">
     <div class="card-title">📈 Hashrate — Últimos 80 Samples</div>
@@ -429,6 +448,23 @@ async function refresh() {
       $('adapt-mode').textContent = d.adaptation.mode || '--';
       $('adapt-decisions').textContent = (d.adaptation.decisions || 0).toLocaleString();
       $('adapt-instants').textContent = (d.adaptation.complete_instants || 0).toLocaleString();
+    }
+
+
+    // Audit engine
+    if (d.audit) {
+      const v = d.audit.verdict || 'unknown';
+      const colors = { SANO: '#00ff9d', ADVERTENCIA: '#ffb800', CRITICO: '#ff3158', VACIO: '#6b8ba8', unknown: '#6b8ba8' };
+      const icons = { SANO: '✅ ', ADVERTENCIA: '⚠️ ', CRITICO: '❌ ', VACIO: '', unknown: '' };
+      const vEl = $('audit-verdict');
+      vEl.textContent = (icons[v] || '') + v;
+      vEl.style.color = colors[v] || '#6b8ba8';
+      $('audit-ok').textContent = d.audit.ok || 0;
+      $('audit-warn').textContent = d.audit.warn || 0;
+      $('audit-fail').textContent = d.audit.fail || 0;
+      if (d.audit.age_min !== null && d.audit.age_min !== undefined) {
+        $('audit-age').textContent = 'hace ' + d.audit.age_min + ' min';
+      }
     }
 
     // Gráfico

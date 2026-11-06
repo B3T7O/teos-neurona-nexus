@@ -452,6 +452,51 @@ class Handler(SimpleHTTPRequestHandler):
                     except Exception:
                         pass
                 
+                # 10. Audit summary (auto-ejecuta si no hay reporte reciente)
+                audit = {"verdict": "unknown", "ok": 0, "warn": 0, "fail": 0,
+                         "ts": None, "age_min": None}
+                try:
+                    import time as _t
+                    import subprocess as _sp
+                    _audit_dir = _ROOT / "data" / "audit"
+                    _audit_dir.mkdir(parents=True, exist_ok=True)
+                    _files = sorted(_audit_dir.glob("audit_*.json"), reverse=True)
+                    _fresh_enough = False
+                    if _files:
+                        _age = _t.time() - _files[0].stat().st_mtime
+                        if _age < 1800:  # < 30 min
+                            _fresh_enough = True
+                    if not _fresh_enough:
+                        # Ejecutar auditoria rapida en background (timeout 8s)
+                        _sp.run(
+                            ["python3", "tools/teos_audit.py", "--tail", "500"],
+                            cwd=str(_ROOT), capture_output=True, timeout=8
+                        )
+                        _files = sorted(_audit_dir.glob("audit_*.json"), reverse=True)
+                    if _files:
+                        _latest = _j.loads(_files[0].read_text())
+                        _c = _latest.get("counts", {})
+                        _ok = _c.get("OK", 0)
+                        _warn = _c.get("WARN", 0)
+                        _fail = _c.get("FAIL", 0)
+                        if _fail > 0:
+                            _verdict = "CRITICO"
+                        elif _warn > 0:
+                            _verdict = "ADVERTENCIA"
+                        elif _ok > 0:
+                            _verdict = "SANO"
+                        else:
+                            _verdict = "VACIO"
+                        _age = _t.time() - _files[0].stat().st_mtime
+                        audit = {
+                            "verdict": _verdict,
+                            "ok": _ok, "warn": _warn, "fail": _fail,
+                            "ts": _latest.get("timestamp_utc"),
+                            "age_min": round(_age / 60, 1),
+                        }
+                except Exception:
+                    pass
+                
                 payload = _j.dumps({
                     "bitaxe": {"hashRate": btx.get("hashRate"), "temp": btx.get("temp"),
                                "vrTemp": btx.get("vrTemp"), "frequency": btx.get("frequency"),
@@ -466,6 +511,7 @@ class Handler(SimpleHTTPRequestHandler):
                     "memory": memory,
                     "trend": trend,
                     "adaptation": adaptation,
+                    "audit": audit,
                     "chart": chart,
                 }).encode("utf-8")
                 
