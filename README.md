@@ -83,7 +83,7 @@ Key components:
 ## Quick Start
 
 ```bash
-git clone https://github.com/TU_USUARIO/teos-neurona-nexus.git
+git clone https://github.com/B3T7O/teos-neurona-nexus.git
 cd teos-neurona-nexus
 
 # Configure your Bitaxe IP
@@ -123,7 +123,7 @@ This repository is the **canonical, original implementation** of TEOS Neurona Ne
 
 Forks and derivative works are welcome under the terms of the Apache 2.0 license. If you build on this work, please credit the original:
 
-> *"Based on TEOS Neurona Nexus by Luis Alberto Siguencia Andrade (B3T7O), https://github.com/TU_USUARIO/teos-neurona-nexus"*
+> *"Based on TEOS Neurona Nexus by Luis Alberto Siguencia Andrade (B3T7O), https://github.com/B3T7O/teos-neurona-nexus"*
 
 ## License
 
