@@ -1,3 +1,9 @@
+# Copyright (c) 2026 Luis Alberto Siguencia Andrade (B3T7O)
+# SPDX-License-Identifier: Apache-2.0
+#
+# TEOS Neurona Nexus - Reference Implementation
+# https://github.com/[TU_USUARIO]/teos-neurona-nexus
+
 """
 TEOS Neurona Nexus - Estado de animo de la neurona.
 Modulo read-only. Lectura optimizada (seek al final del archivo) + cache 2s.

@@ -1,3 +1,9 @@
+# Copyright (c) 2026 Luis Alberto Siguencia Andrade (B3T7O)
+# SPDX-License-Identifier: Apache-2.0
+#
+# TEOS Neurona Nexus - Reference Implementation
+# https://github.com/[TU_USUARIO]/teos-neurona-nexus
+
 import json
 import time
 from datetime import datetime, timezone
@@ -6,7 +12,9 @@ from urllib.request import urlopen
 
 from core.validation import validate_bitaxe_record
 
-URL = "http://192.168.1.100/api/system/info"
+import os
+BITAXE_IP = os.environ.get("BITAXE_IP", "192.168.1.100")
+URL = f"http://{BITAXE_IP}/api/system/info"
 OUTPUT = Path(__file__).resolve().parent.parent / "data/raw/bitaxe_samples.jsonl"
 INTERVAL = 60
 

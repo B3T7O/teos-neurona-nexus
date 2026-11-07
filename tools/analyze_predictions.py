@@ -1,4 +1,10 @@
 #!/usr/bin/env python3
+# Copyright (c) 2026 Luis Alberto Siguencia Andrade (B3T7O)
+# SPDX-License-Identifier: Apache-2.0
+#
+# TEOS Neurona Nexus - Reference Implementation
+# https://github.com/[TU_USUARIO]/teos-neurona-nexus
+
 """
 Analisis de predicciones validadas.
 Compara los metodos de prediccion y mide si superan al baseline ingenuo.

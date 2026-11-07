@@ -10,7 +10,8 @@ import urllib.request
 from datetime import datetime, timezone
 from pathlib import Path
 
-BITAXE = "http://192.168.1.100"
+import os
+BITAXE = f"http://{os.environ.get('BITAXE_IP', '192.168.1.100')}"
 LOG = Path("data/raw/bitaxe_undervolt_test.jsonl")
 FREQ = 525
 ORIG_VOLT = 1150

@@ -1,3 +1,9 @@
+# Copyright (c) 2026 Luis Alberto Siguencia Andrade (B3T7O)
+# SPDX-License-Identifier: Apache-2.0
+#
+# TEOS Neurona Nexus - Reference Implementation
+# https://github.com/[TU_USUARIO]/teos-neurona-nexus
+
 """Ejecuta análisis periódicos sin intervenir en el colector Bitaxe."""
 
 import time

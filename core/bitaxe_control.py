@@ -1,4 +1,10 @@
 #!/usr/bin/env python3
+# Copyright (c) 2026 Luis Alberto Siguencia Andrade (B3T7O)
+# SPDX-License-Identifier: Apache-2.0
+#
+# TEOS Neurona Nexus - Reference Implementation
+# https://github.com/[TU_USUARIO]/teos-neurona-nexus
+
 """Controlador conservador de Bitaxe Gamma. Por defecto, solo simula."""
 import argparse
 import json
@@ -8,7 +14,9 @@ from datetime import datetime, timezone
 from pathlib import Path
 from urllib.request import Request, urlopen
 
-BASE = "http://192.168.1.100"
+import os
+BITAXE_IP = os.environ.get("BITAXE_IP", "192.168.1.100")
+BASE = f"http://{BITAXE_IP}"
 LOG = Path("data/raw/bitaxe_control.jsonl")
 
 def get_json(path):
