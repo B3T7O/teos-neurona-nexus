@@ -353,6 +353,22 @@
     </div>
   </div>
 
+  <!-- MetaLearner Lite -->
+  <div class="card" id="TARJETA_META">
+    <div class="card-title">🧠 TEOS MetaLearner Lite v1</div>
+    <div class="achievement">
+      <span class="k">Recomendación actual</span>
+      <span class="v gold" id="meta-method" style="font-weight:900">--</span>
+    </div>
+    <div class="achievement">
+      <span class="k">Mediana APE (ventana)</span>
+      <span class="v green" id="meta-ape">--</span>
+    </div>
+    <div class="achievement" style="font-size:0.8em;color:var(--muted);margin-top:6px">
+      <span>Shadow mode · solo recomendación, no afecta producción</span>
+    </div>
+  </div>
+
   <!-- Gráfico -->
   <div class="card" style="grid-column: 1 / -1;">
     <div class="card-title">📈 Hashrate — Últimos 80 Samples</div>
@@ -464,6 +480,17 @@ async function refresh() {
       $('audit-fail').textContent = d.audit.fail || 0;
       if (d.audit.age_min !== null && d.audit.age_min !== undefined) {
         $('audit-age').textContent = 'hace ' + d.audit.age_min + ' min';
+      }
+    }
+
+
+    // MetaLearner Lite v1
+    if (d.meta) {
+      const methodEl = $('meta-method');
+      const apeEl = $('meta-ape');
+      if (methodEl && apeEl) {
+        methodEl.textContent = d.meta.recommended_method || 'N/A';
+        apeEl.textContent = d.meta.median_ape ? d.meta.median_ape.toFixed(2) + '%' : '--';
       }
     }
 
