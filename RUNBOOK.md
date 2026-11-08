@@ -95,3 +95,15 @@ Para detener el sistema:
     pkill -f "core.collector"
     pkill -f "core.scheduler"
     pkill -f "web/server.py"
+
+## Nota técnica: Uso de `setsid` en `start_teos.sh`
+
+El script `start_teos.sh` utiliza `setsid` en lugar de `nohup` para arrancar los procesos.
+Esto crea una sesión independiente pero mantiene a los 3 procesos agrupados bajo el mismo
+padre, evitando que se conviertan en huérfanos (PPID=1) y consuman RAM extra.
+
+El script también incluye un candado (`flock`) que impide que se ejecute dos veces
+simultáneamente, evitando duplicados si se abre más de una terminal.
+
+El auto-arranque está configurado en `~/.bashrc`: al abrir una terminal, si el sistema
+no está corriendo, se ejecuta `./start_teos.sh` automáticamente.
