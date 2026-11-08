@@ -56,6 +56,14 @@ def main():
                 print("Error en la evaluación prospectiva; el programador continuará:")
                 traceback.print_exc()
 
+            # === TEOS MetaLearner Lite v1 (shadow mode) ===
+            try:
+                from core.meta_learner_lite import compute_recommendation
+                compute_recommendation()
+            except Exception:
+                pass  # Si falla, el scheduler sigue funcionando
+            # =============================================
+
             elapsed = time.monotonic() - started
             time.sleep(max(0, INTERVAL - elapsed))
 
