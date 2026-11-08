@@ -80,6 +80,13 @@ Key components:
 - web/security.py - host validation, rate limiting, path-traversal protection.
 - tools/teos_audit.py - read-only system audit (health, freshness, duplicate detection, quality).
 
+
+### Dashboard access
+
+- **Canonical dashboard (today):** `http://127.0.0.1:8765/pitch.html` — cinematic, responsive, all 9 data panels connected.
+- **Legacy dashboard:** `http://127.0.0.1:8765/` — older layout, some panels still pending. Will be archived soon.
+- **Planned unification:** In the next release, `pitch.html` will become the default `index.html` and the legacy dashboard will move to `legacy.html`. From that point, `http://127.0.0.1:8765/` will always show the canonical screen. See `CHANGELOG.md` for details.
+
 ## Quick Start
 
 ```bash
