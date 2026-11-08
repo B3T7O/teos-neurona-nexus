@@ -65,3 +65,33 @@ Evidencia de que el sistema funciona:
 Conclusion: el "72.3%" no indica fallo. Indica que el audit engine compara
 conjuntos distintos. Mejora futura del audit (v0.2): comparar por metodo.
 Estado del sistema: SANO Y OPERATIVO.
+
+## Nota importante: Arranque manual (Systemd deshabilitado)
+
+Debido a un bug de WSL2 que duplicaba los procesos (creando huérfanos y consumiendo RAM), 
+los servicios de systemd están deshabilitados. Para arrancar el sistema de forma segura y limpia, 
+usa el script incluido:
+
+    ./start_teos.sh
+
+Este script inicia exactamente 3 procesos (collector, scheduler, web) sin crear duplicados.
+Para detener el sistema:
+
+    pkill -f "core.collector"
+    pkill -f "core.scheduler"
+    pkill -f "web/server.py"
+
+## Nota importante: Arranque manual (Systemd deshabilitado)
+
+Debido a un bug de WSL2 que duplicaba los procesos (creando huérfanos y consumiendo RAM), 
+los servicios de systemd están deshabilitados. Para arrancar el sistema de forma segura y limpia, 
+usa el script incluido:
+
+    ./start_teos.sh
+
+Este script inicia exactamente 3 procesos (collector, scheduler, web) sin crear duplicados.
+Para detener el sistema:
+
+    pkill -f "core.collector"
+    pkill -f "core.scheduler"
+    pkill -f "web/server.py"
