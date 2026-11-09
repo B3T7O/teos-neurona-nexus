@@ -33,11 +33,16 @@ def main():
                 print("Error durante el análisis:")
                 traceback.print_exc()
 
-            try:
-                run_learning_loop_v2()
-            except Exception:
-                print("Error en el ciclo de aprendizaje V2; el programador continuará:")
-                traceback.print_exc()
+            # Respetar pausa del Guardian
+            from pathlib import Path as _PP
+            if not (_PP(__file__).parent.parent / "data" / "guardian" / "PAUSE_LEARNING").exists():
+                try:
+                    run_learning_loop_v2()
+                except Exception:
+                    print("Error en el ciclo de aprendizaje V2; el programador continuará:")
+                    traceback.print_exc()
+            else:
+                print("[GUARDIAN] learning_loop pausado por el Guardian.")
 
             try:
                 run_ridge_live()

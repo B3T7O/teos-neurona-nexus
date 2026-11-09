@@ -14,6 +14,7 @@ export BITAXE_IP=192.168.18.45
 pkill -9 -f "core.collector" 2>/dev/null
 pkill -9 -f "core.scheduler" 2>/dev/null
 pkill -9 -f "web/server.py" 2>/dev/null
+pkill -9 -f "core.guardian" 2>/dev/null
 sleep 2
 
 # Arrancar los 3 procesos con setsid (sesión independiente, no huérfanos)
@@ -25,6 +26,9 @@ setsid python3 -u -m core.scheduler > logs/scheduler.log 2>&1 < /dev/null &
 
 echo "Arrancando servidor web..."
 setsid python3 -u web/server.py > logs/web-server.log 2>&1 < /dev/null &
+
+echo "Arrancando Guardian (watchdog)..."
+setsid python3 -u -m core.guardian > logs/guardian.log 2>&1 < /dev/null &
 
 sleep 5
 

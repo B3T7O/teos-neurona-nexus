@@ -308,6 +308,27 @@ class Handler(SimpleHTTPRequestHandler):
         super().end_headers()
 
     def do_GET(self):
+        # FAST /api/guardian - estado del Guardian
+        if self.path.startswith("/api/guardian"):
+            try:
+                import json as _j
+                from pathlib import Path as _P
+                _state_path = _P(__file__).parent.parent / "data" / "guardian" / "state.json"
+                if _state_path.exists():
+                    data = _j.loads(_state_path.read_text())
+                else:
+                    data = {"state": "UNKNOWN", "reason": "Guardian no ha escrito estado aún"}
+                payload = _j.dumps(data).encode()
+                self.send_response(200)
+                self.send_header("Content-Type", "application/json")
+                self.send_header("Content-Length", str(len(payload)))
+                self.end_headers()
+                self.wfile.write(payload)
+            except Exception:
+                try: self.send_response(200); self.end_headers()
+                except: pass
+            return
+
         # FAST /api/experiences - Panel de Experiencias
         if self.path.startswith("/api/experiences"):
             try:
@@ -593,9 +614,13 @@ class Handler(SimpleHTTPRequestHandler):
                             lines = mf.read().decode("utf-8", errors="ignore").strip().split(chr(10))
                         if lines:
                             last = _j.loads(lines[-1])
+                            ranking = last.get("ranking", [])
+                            best = ranking[0] if ranking else {}
                             meta = {
                                 "version": last.get("version", "v1"),
                                 "recommended_method": last.get("recommended_method", "N/A"),
+                                "combined_median_ape": best.get("combined_median_ape", 0.0),
+                                "confidence": last.get("confidence", "N/A"),
                                 "median_ape": last.get("recommended_median_ape", 0.0),
                                 "timestamp": last.get("timestamp"),
                             }

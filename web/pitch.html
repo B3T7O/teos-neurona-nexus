@@ -369,6 +369,30 @@
     </div>
   </div>
 
+  <!-- TEOS Guardian -->
+  <div class="card" id="TARJETA_GUARDIAN">
+    <div class="card-title">🛡️ TEOS Guardian v1.0</div>
+    <div class="achievement">
+      <span class="k">Estado</span>
+      <span class="v" id="guardian-state" style="font-weight:900">--</span>
+    </div>
+    <div class="achievement">
+      <span class="k">RAM libre</span>
+      <span class="v" id="guardian-ram">--</span>
+    </div>
+    <div class="achievement">
+      <span class="k">CPU</span>
+      <span class="v" id="guardian-cpu">--</span>
+    </div>
+    <div class="achievement">
+      <span class="k">learning_loop</span>
+      <span class="v" id="guardian-paused">--</span>
+    </div>
+    <div class="achievement" style="font-size:0.8em;color:var(--muted);margin-top:6px">
+      <span id="guardian-reason">Watchdog activo cada 60s</span>
+    </div>
+  </div>
+
   <!-- Gráfico -->
   <div class="card" style="grid-column: 1 / -1;">
     <div class="card-title">📈 Hashrate — Últimos 80 Samples</div>
@@ -490,9 +514,38 @@ async function refresh() {
       const apeEl = $('meta-ape');
       if (methodEl && apeEl) {
         methodEl.textContent = d.meta.recommended_method || 'N/A';
-        apeEl.textContent = d.meta.median_ape ? d.meta.median_ape.toFixed(2) + '%' : '--';
+        // Aceptar campo nuevo (combined_median_ape) o viejo (median_ape)
+        var ape = d.meta.combined_median_ape != null ? d.meta.combined_median_ape : d.meta.median_ape;
+        apeEl.textContent = (ape != null && ape > 0) ? ape.toFixed(2) + '%' : '--';
       }
     }
+
+
+    // TEOS Guardian
+    try {
+      const gr = await fetch('/api/guardian', {cache: 'no-store'});
+      if (gr.ok) {
+        const g = await gr.json();
+        const stEl = $('guardian-state');
+        const colors = { OK: '#00ff9d', WARNING: '#ffb800', CRITICAL: '#ff3158', UNKNOWN: '#6b8ba8' };
+        const icons = { OK: '✅ ', WARNING: '⚠️ ', CRITICAL: '🚨 ', UNKNOWN: '❔ ' };
+        if (stEl) {
+          stEl.textContent = (icons[g.state] || '') + (g.state || 'UNKNOWN');
+          stEl.style.color = colors[g.state] || '#6b8ba8';
+        }
+        const ramEl = $('guardian-ram');
+        if (ramEl) ramEl.textContent = g.ram_free_mb ? g.ram_free_mb + ' MB' : '--';
+        const cpuEl = $('guardian-cpu');
+        if (cpuEl) cpuEl.textContent = g.cpu_load_pct != null ? g.cpu_load_pct + '%' : '--';
+        const pauseEl = $('guardian-paused');
+        if (pauseEl) {
+          pauseEl.textContent = g.learning_paused ? 'PAUSADO' : 'ACTIVO';
+          pauseEl.style.color = g.learning_paused ? '#ffb800' : '#00ff9d';
+        }
+        const reasonEl = $('guardian-reason');
+        if (reasonEl && g.reason) reasonEl.textContent = g.reason;
+      }
+    } catch(e) {}
 
     // Gráfico
     if (d.chart && d.chart.length > 1) drawChart(d.chart);
