@@ -64,6 +64,13 @@ def main():
                 pass  # Si falla, el scheduler sigue funcionando
             # =============================================
 
+            # === TEOS Ensemble Learner v2-B (shadow mode) ===
+            try:
+                from core.ensemble_learner import compute_ensemble
+                compute_ensemble()
+            except Exception:
+                pass
+            # ================================================
             elapsed = time.monotonic() - started
             time.sleep(max(0, INTERVAL - elapsed))
 
