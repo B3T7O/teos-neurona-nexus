@@ -45,3 +45,6 @@ logs/web-server.log
 
 # Reportes del audit engine (se regeneran)
 data/audit/
+
+# Guardian runtime data (regenerates every 60s)
+data/guardian/
