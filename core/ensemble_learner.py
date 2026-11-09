@@ -34,24 +34,26 @@ def _tail_lines(path, max_bytes=50000):
 def _get_weights():
     meta_lines = _tail_lines(META_REC, 5000)
     if not meta_lines:
-        return None, "No hay registros del MetaLearner"
+        return None, "No hay registros del MetaLearner", "NULA"
     
     last = meta_lines[-1]
     ranking = last.get("ranking", [])
+    confidence = last.get("confidence", "NULA")
     
     weights = {}
     for item in ranking:
         method = item.get("method")
-        ape = item.get("median_ape", 99.0)
+        # Aceptar el campo nuevo (combined) o el viejo (median) por compatibilidad
+        ape = item.get("combined_median_ape", item.get("median_ape", 99.0))
         if ape <= 0: ape = 0.01
         weights[method] = 1.0 / ape
     
     total = sum(weights.values())
-    if total == 0: return None, "Pesos inválidos"
+    if total == 0: return None, "Pesos inválidos", confidence
     for m in weights:
         weights[m] /= total
         
-    return weights, "OK"
+    return weights, "OK", confidence
 
 def _get_latest_predictions():
     lines = _tail_lines(OUTCOMES, 60000)
@@ -76,7 +78,7 @@ def _get_latest_predictions():
     return predictions, latest_target
 
 def compute_ensemble():
-    weights, w_status = _get_weights()
+    weights, w_status, confidence = _get_weights()
     if not weights:
         return {"error": w_status}
         
@@ -99,6 +101,7 @@ def compute_ensemble():
         "weights": {k: round(v, 4) for k, v in weights.items()},
         "individual_predictions": predictions,
         "ensemble_prediction_GHs": round(ensemble_pred, 2),
+        "meta_confidence": confidence,
         "mode": "shadow",
         "affects_production": False
     }

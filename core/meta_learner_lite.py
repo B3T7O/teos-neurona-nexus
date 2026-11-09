@@ -1,92 +1,124 @@
 """
-TEOS MetaLearner Lite v1
-=========================
-Shadow-mode selector that recommends the best prediction method
-based on recent median APE over a moving window.
-
-This is the Lite version of the full Meta-Learner (Phase 5.5).
-It requires < 5 MB of RAM and < 100 ms of CPU per cycle.
-It does NOT change the production predictor. It only recommends.
-
-Author: Luis Alberto Siguencia Andrade (B3T7O)
-License: Apache 2.0
+TEOS MetaLearner Lite v1 (Panoramic)
+====================================
+Multi-window selector: looks at 5 time windows (1h, 6h, 12h, 18h, 24h).
+If windows disagree, the method with the best combined median APE wins.
+Does NOT affect production.
 """
 import json
 import statistics
 from pathlib import Path
 from datetime import datetime, timezone
+from collections import Counter
 
 OUTCOMES = Path("data/processed/learning_outcomes_v2.jsonl")
 OUTPUT = Path("data/processed/meta_learner_recommendations.jsonl")
-WINDOW_BYTES = 60_000  # read only the last 60 KB
+
+WINDOWS = [
+    ("1h", 30_000),
+    ("6h", 180_000),
+    ("12h", 360_000),
+    ("18h", 540_000),
+    ("24h", 720_000),
+]
 MIN_SAMPLES = 10
 
-
-def _tail_lines(path: Path, max_bytes: int):
-    if not path.exists():
-        return []
+def _tail_lines(path, max_bytes):
+    if not path.exists(): return []
     try:
         size = path.stat().st_size
         with path.open("rb") as f:
             if size > max_bytes:
                 f.seek(size - max_bytes)
-                f.readline()  # discard partial line
+                f.readline()
             data = f.read().decode("utf-8", errors="ignore")
-    except OSError:
-        return []
+    except OSError: return []
     out = []
     for ln in data.splitlines():
         ln = ln.strip()
-        if not ln:
-            continue
-        try:
-            out.append(json.loads(ln))
-        except json.JSONDecodeError:
-            pass
+        if not ln: continue
+        try: out.append(json.loads(ln))
+        except json.JSONDecodeError: pass
     return out
 
-
-def compute_recommendation():
-    records = _tail_lines(OUTCOMES, WINDOW_BYTES)
+def _window_analysis(records):
     by_method = {}
     for r in records:
-        method = r.get("method")
+        m = r.get("method")
         ape = r.get("absolute_percentage_error")
-        if not method or not isinstance(ape, (int, float)):
-            continue
-        by_method.setdefault(method, []).append(ape)
+        if m and isinstance(ape, (int, float)):
+            by_method.setdefault(m, []).append(ape)
+    stats = {}
+    for m, apes in by_method.items():
+        if len(apes) >= MIN_SAMPLES:
+            stats[m] = {
+                "n": len(apes),
+                "median_ape": round(statistics.median(apes), 4),
+                "mean_ape": round(statistics.mean(apes), 4),
+            }
+    winner = min(stats, key=lambda x: stats[x]["median_ape"]) if stats else None
+    return stats, winner
 
-    ranked = []
-    for method, apes in by_method.items():
-        if len(apes) < MIN_SAMPLES:
-            continue
-        ranked.append({
-            "method": method,
-            "n": len(apes),
-            "median_ape": round(statistics.median(apes), 4),
-            "mean_ape": round(statistics.mean(apes), 4),
+def compute_recommendation():
+    window_winners = {}
+    all_method_apes = {}
+
+    for name, size in WINDOWS:
+        records = _tail_lines(OUTCOMES, size)
+        stats, winner = _window_analysis(records)
+        window_winners[name] = winner
+        for m, s in stats.items():
+            all_method_apes.setdefault(m, []).append(s["median_ape"])
+
+    valid = [w for w in window_winners.values() if w]
+    if valid:
+        counts = Counter(valid)
+        top_method, top_count = counts.most_common(1)[0]
+    else:
+        top_method, top_count = None, 0
+
+    combined = {}
+    for m, apes in all_method_apes.items():
+        combined[m] = {
+            "combined_median_ape": round(statistics.mean(apes), 4),
+            "windows_present": len(apes),
+        }
+
+    # Consenso >= 3 ventanas -> gana el consenso
+    # Si discrepan -> gana el de menor APE combinado
+    if top_count >= 3:
+        recommended = top_method
+        confidence = "ALTA" if top_count == 5 else "MEDIA"
+    else:
+        if combined:
+            recommended = min(combined, key=lambda x: combined[x]["combined_median_ape"])
+            confidence = "BAJA"
+        else:
+            recommended, confidence = None, "NULA"
+
+    ranking = []
+    for m in sorted(combined, key=lambda x: combined[x]["combined_median_ape"]):
+        ranking.append({
+            "method": m,
+            "combined_median_ape": combined[m]["combined_median_ape"],
+            "windows_present": combined[m]["windows_present"],
         })
 
-    ranked.sort(key=lambda x: x["median_ape"])
-
-    recommendation = {
-        "version": "TEOS MetaLearner Lite v1",
+    rec = {
+        "version": "TEOS MetaLearner Lite v1 (Panoramic)",
         "timestamp": datetime.now(timezone.utc).isoformat(),
-        "window_records": len(records),
-        "recommended_method": ranked[0]["method"] if ranked else None,
-        "recommended_median_ape": ranked[0]["median_ape"] if ranked else None,
-        "ranking": ranked,
+        "recommended_method": recommended,
+        "confidence": confidence,
+        "window_winners": window_winners,
+        "window_agreement": f"{top_count}/5",
+        "ranking": ranking,
         "mode": "shadow",
         "affects_production": False,
     }
-
     OUTPUT.parent.mkdir(parents=True, exist_ok=True)
     with OUTPUT.open("a", encoding="utf-8") as f:
-        f.write(json.dumps(recommendation) + "\n")
-
-    return recommendation
-
+        f.write(json.dumps(rec) + "\n")
+    return rec
 
 if __name__ == "__main__":
-    rec = compute_recommendation()
-    print(json.dumps(rec, indent=2, ensure_ascii=False))
+    print(json.dumps(compute_recommendation(), indent=2, ensure_ascii=False))
