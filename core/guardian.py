@@ -137,6 +137,17 @@ def _notify(severity, subject, message):
 def check_once():
     global _critical_streak
 
+    # --- Best Share tracker ---
+    try:
+        import sys
+        sys.path.insert(0, str(ROOT))
+        from core.bestshare_tracker import update_and_get
+        bs = update_and_get()
+        if bs.get("is_new_record"):
+            _notify("RECORD", "Nuevo bestDiff", f"Nuevo récord: {bs['current_best']:,} (total: {bs['record_count']})")
+    except Exception as e:
+        logging.debug(f"bestshare tracker: {e}")
+
     ram = _ram_free_mb()
     cpu = _cpu_load_pct()
     btx = _bitaxe_ok()

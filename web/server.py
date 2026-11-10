@@ -308,6 +308,34 @@ class Handler(SimpleHTTPRequestHandler):
         super().end_headers()
 
     def do_GET(self):
+        # FAST /api/bestshare - estado del mejor share
+        if self.path.startswith("/api/bestshare"):
+            try:
+                import sys as _sys
+                import json as _j
+                from pathlib import Path as _PathBS
+                _root_bs = _PathBS(__file__).resolve().parent.parent
+                if str(_root_bs) not in _sys.path:
+                    _sys.path.insert(0, str(_root_bs))
+                from core.bestshare_tracker import update_and_get
+                data = update_and_get()
+                payload = _j.dumps(data).encode()
+                self.send_response(200)
+                self.send_header("Content-Type", "application/json")
+                self.send_header("Content-Length", str(len(payload)))
+                self.end_headers()
+                self.wfile.write(payload)
+            except Exception as _e:
+                try:
+                    err = _j.dumps({"error": str(_e)}).encode()
+                    self.send_response(500)
+                    self.send_header("Content-Type", "application/json")
+                    self.send_header("Content-Length", str(len(err)))
+                    self.end_headers()
+                    self.wfile.write(err)
+                except: pass
+            return
+
         # FAST /api/guardian - estado del Guardian
         if self.path.startswith("/api/guardian"):
             try:

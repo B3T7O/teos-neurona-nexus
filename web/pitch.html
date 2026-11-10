@@ -393,6 +393,26 @@
     </div>
   </div>
 
+  <!-- Mejor Share (BestDiff) -->
+  <div class="card" id="TARJETA_BESTSHARE">
+    <div class="card-title">🏅 Mejor Share (BestDiff)</div>
+    <div class="achievement">
+      <span class="k">Récord actual</span>
+      <span class="v gold" id="bs-best" style="font-weight:900">--</span>
+    </div>
+    <div class="achievement">
+      <span class="k">Fecha del récord</span>
+      <span class="v" id="bs-date" style="font-size:0.85em">--</span>
+    </div>
+    <div class="achievement">
+      <span class="k">Récords totales</span>
+      <span class="v green" id="bs-count">--</span>
+    </div>
+    <div class="achievement" style="margin-top:8px;font-size:0.8em;color:var(--muted)">
+      <span id="bs-status">Detectando nuevos récords cada 5 min</span>
+    </div>
+  </div>
+
   <!-- Gráfico -->
   <div class="card" style="grid-column: 1 / -1;">
     <div class="card-title">📈 Hashrate — Últimos 80 Samples</div>
@@ -544,6 +564,33 @@ async function refresh() {
         }
         const reasonEl = $('guardian-reason');
         if (reasonEl && g.reason) reasonEl.textContent = g.reason;
+      }
+    } catch(e) {}
+
+
+    // Mejor Share (BestDiff)
+    try {
+      const bsR = await fetch('/api/bestshare', {cache: 'no-store'});
+      if (bsR.ok) {
+        const bs = await bsR.json();
+        const bestEl = $('bs-best');
+        const dateEl = $('bs-date');
+        const countEl = $('bs-count');
+        const statusEl = $('bs-status');
+
+        if (bestEl && bs.current_best) {
+          bestEl.textContent = bs.current_best.toLocaleString();
+        }
+        if (dateEl && bs.last_best_ts) {
+          dateEl.textContent = bs.last_best_ts.substring(0, 19).replace('T', ' ') + ' UTC';
+        }
+        if (countEl && bs.record_count != null) {
+          countEl.textContent = bs.record_count;
+        }
+        if (statusEl && bs.is_new_record) {
+          statusEl.textContent = '🎉 ¡NUEVO RÉCORD DETECTADO!';
+          statusEl.style.color = '#ffd700';
+        }
       }
     } catch(e) {}
 
