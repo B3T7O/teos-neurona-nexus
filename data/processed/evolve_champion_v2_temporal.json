@@ -1,0 +1,20 @@
+{
+  "version": "TEOS Evolve Lab v2.0",
+  "mode": "temporal",
+  "timestamp": "2026-11-11T13:00:55.674623+00:00",
+  "weights": {
+    "adaptativo_neurona": 0.002,
+    "referencia_10m": 0.1963,
+    "referencia_1h": 0.7487,
+    "media_ultimas_5": 0.053,
+    "ultimo_hashrate": 0.0
+  },
+  "fitness_value": 2.2664,
+  "metrics": {
+    "ape_mean": 2.2664,
+    "ape_median": 1.9613,
+    "ape_p95": 5.5576,
+    "ape_max": 12.207,
+    "n": 3012
+  }
+}

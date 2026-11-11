@@ -162,3 +162,58 @@
 - **Conclusión**: ✅ **Fallo resuelto.** El evaluador en vivo sigue funcionando igual
   (no se tocó). Este fix solo rellena el histórico. Si en el futuro vuelven a
   acumularse huérfanas, es señal de que el evaluador necesita revisarse.
+
+## EXP-014 — Evolve Lab v2: fitness alternativos
+- **Fecha**: 2026-11-11
+- **Hipótesis**: el estancamiento del GA v1 se debía a un fitness demasiado simple
+  (solo APE media). Probar 3 fitness alternativos para escapar del óptimo local.
+- **Modos probados**:
+  - `multi_objective`: 0.6·mean + 0.4·p95 (penalizar cola alta)
+  - `temporal`: solo últimos 7 días (adaptarse a datos recientes)
+  - `regime_low` / `regime_high`: split por volatilidad (champion por régimen)
+- **Método**: 4 GAs independientes (60 individuos × 40 generaciones cada uno),
+  evaluados sobre **los mismos 5000 targets** recientes.
+- **Resultado** (mean / p95 / max):
+  | Champion | mean | p95 | max |
+  |---|---|---|---|
+  | v1_original | 2.251% | 5.504% | 12.24% |
+  | multi_obj | 2.256% | **5.466%** | 12.12% |
+  | regime_high | 2.256% | 5.478% | **12.10%** |
+  | regime_low | 2.251% | 5.504% | 12.30% |
+  | temporal | 2.251% | 5.480% | 12.21% |
+- **Conclusión**: ❌ **Los 3 modos nuevos no superan al v1.** Variaciones de
+  décimas de punto = ruido. El "estancamiento" no es un problema de fitness:
+  es que el óptimo real es **trivial** (referencia_1h con 82% de peso).
+  Cualquier combinación que lo respete da casi lo mismo. El GA no puede
+  escapar de ese óptimo porque **no hay otro mejor**.
+- **Artefactos**: `data/processed/evolve_champion_v2_{multi_obj,temporal,regime_low,regime_high}.json`
+  (documentación del experimento, NO usados en producción).
+- **Lección**: antes de optimizar el optimizador, verificar que el problema
+  tiene margen de mejora. Aquí no lo tiene.
+
+
+## EXP-014 — Evolve Lab v2: fitness alternativos
+- **Fecha**: 2026-11-11
+- **Hipotesis**: el estancamiento del GA v1 se debia a un fitness demasiado simple
+  (solo APE media). Probar 3 fitness alternativos para escapar del optimo local.
+- **Modos probados**:
+  - multi_objective: 0.6*mean + 0.4*p95 (penalizar cola alta)
+  - temporal: solo ultimos 7 dias (adaptarse a datos recientes)
+  - regime_low / regime_high: split por volatilidad (champion por regimen)
+- **Metodo**: 4 GAs independientes (60 individuos x 40 generaciones cada uno),
+  evaluados sobre los mismos 5000 targets recientes.
+- **Resultado** (mean / p95 / max):
+  | Champion | mean | p95 | max |
+  |---|---|---|---|
+  | v1_original | 2.251% | 5.504% | 12.24% |
+  | multi_obj | 2.256% | 5.466% | 12.12% |
+  | regime_high | 2.256% | 5.478% | 12.10% |
+  | regime_low | 2.251% | 5.504% | 12.30% |
+  | temporal | 2.251% | 5.480% | 12.21% |
+- **Conclusion**: Los 3 modos nuevos NO superan al v1. Variaciones de decimas
+  de punto = ruido. El estancamiento no es un problema de fitness: el optimo
+  real es trivial (referencia_1h con 82% de peso). Cualquier combinacion que
+  lo respete da casi lo mismo.
+- **Artefactos**: data/processed/evolve_champion_v2_*.json (documentacion, NO en produccion)
+- **Leccion**: antes de optimizar el optimizador, verificar que el problema
+  tiene margen de mejora. Aqui no lo tiene.
