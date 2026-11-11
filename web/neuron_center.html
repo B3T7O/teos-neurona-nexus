@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>TEOS Neuron Center — Flujo del aprendizaje</title>
+<style>
+  :root { --bg:#0a0e14; --fg:#e6edf3; --dim:#8b949e; --acc:#58a6ff; --ok:#3fb950; --warn:#d29922; --bad:#f85149; --line:#30363d; }
+  * { box-sizing: border-box; }
+  body { margin:0; font-family: ui-monospace, 'SF Mono', Menlo, Consolas, monospace; background:var(--bg); color:var(--fg); font-size:13px; }
+  header { padding:14px 22px; border-bottom:1px solid var(--line); display:flex; justify-content:space-between; align-items:center; }
+  header h1 { margin:0; font-size:15px; letter-spacing:1px; }
+  header .ts { color:var(--dim); font-size:11px; }
+  main { display:grid; grid-template-columns: 1fr 1fr; gap:16px; padding:16px 22px; }
+  .card { background:#0d1117; border:1px solid var(--line); border-radius:6px; padding:14px 16px; }
+  .card h2 { margin:0 0 10px 0; font-size:12px; color:var(--dim); letter-spacing:1px; text-transform:uppercase; font-weight:600; }
+  .full { grid-column: 1 / -1; }
+  svg#flow { width:100%; height:220px; display:block; }
+  .node { fill:#161b22; stroke:var(--line); stroke-width:1.5; }
+  .node.bitaxe { stroke:var(--acc); }
+  .node.learner { stroke:var(--dim); }
+  .node.learner.winner { stroke:var(--ok); fill:#0d2818; }
+  .node.val { stroke:var(--warn); }
+  .node-text { fill:var(--fg); font-size:10px; text-anchor:middle; font-family:inherit; }
+  .node-sub { fill:var(--dim); font-size:8px; text-anchor:middle; font-family:inherit; }
+  .edge { stroke:var(--line); stroke-width:1.2; fill:none; }
+  .edge.active { stroke:var(--acc); stroke-dasharray: 4 6; animation: dash 2s linear infinite; }
+  @keyframes dash { to { stroke-dashoffset: -20; } }
+  .learner-row { display:flex; align-items:center; gap:10px; margin:5px 0; }
+  .learner-name { width:150px; color:var(--dim); font-size:11px; }
+  .bar { flex:1; height:14px; background:#161b22; border:1px solid var(--line); border-radius:3px; overflow:hidden; position:relative; }
+  .bar-fill { height:100%; background:var(--acc); transition: width 0.6s; }
+  .bar-fill.winner { background:var(--ok); }
+  .bar-value { width:70px; text-align:right; color:var(--fg); font-size:11px; }
+  .bar-weight { width:50px; text-align:right; color:var(--dim); font-size:10px; }
+  .pred-grid { display:grid; grid-template-columns: 1fr 1fr; gap:12px; }
+  .pred-item { background:#161b22; border-radius:4px; padding:10px; }
+  .pred-item .label { color:var(--dim); font-size:10px; letter-spacing:0.5px; }
+  .pred-item .value { font-size:18px; margin-top:4px; }
+  .pred-item .value.hl { color:var(--acc); }
+  .pred-item .value.ok { color:var(--ok); }
+  .evol-list { max-height:200px; overflow-y:auto; }
+  .evol-row { padding:5px 0; border-bottom:1px solid #161b22; display:flex; gap:10px; font-size:11px; }
+  .evol-row .ts { color:var(--dim); width:130px; }
+  .evol-row .learner { color:var(--acc); width:150px; }
+  .evol-row .kind.ok { color:var(--ok); }
+  .evol-row .kind.failed { color:var(--bad); }
+  .evol-row .kind.start { color:var(--dim); }
+  canvas#chart { width:100%; height:180px; display:block; }
+  .legend { display:flex; gap:14px; margin-top:8px; font-size:10px; color:var(--dim); flex-wrap:wrap; }
+  .legend .dot { display:inline-block; width:8px; height:8px; border-radius:50%; margin-right:4px; vertical-align:middle; }
+</style>
+</head>
+<body>
+<header>
+  <h1>TEOS NEURON CENTER · FLUJO DEL APRENDIZAJE</h1>
+  <div class="ts" id="ts">cargando…</div>
+</header>
+
+<main>
+  <div class="card full">
+    <h2>Flujo del sistema</h2>
+    <svg id="flow" viewBox="0 0 900 220" preserveAspectRatio="xMidYMid meet"></svg>
+  </div>
+
+  <div class="card">
+    <h2>Última predicción vs real</h2>
+    <div class="pred-grid" id="predGrid">
+      <div class="pred-item"><div class="label">PREDICHO</div><div class="value hl" id="predVal">—</div></div>
+      <div class="pred-item"><div class="label">REAL</div><div class="value" id="actualVal">—</div></div>
+      <div class="pred-item"><div class="label">APE</div><div class="value ok" id="apeVal">—</div></div>
+      <div class="pred-item"><div class="label">MÉTODO</div><div class="value" id="methodVal">—</div></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>Competencia (rolling 100)</h2>
+    <div id="learnersBox"></div>
+  </div>
+
+  <div class="card">
+    <h2>Historial de evoluciones</h2>
+    <div class="evol-list" id="evolBox"></div>
+  </div>
+
+  <div class="card">
+    <h2>Champion weights</h2>
+    <div id="championBox"></div>
+  </div>
+
+  <div class="card full">
+    <h2>Series temporales (últimos 60 timestamps comunes)</h2>
+    <canvas id="chart" width="900" height="180"></canvas>
+    <div class="legend" id="legend"></div>
+  </div>
+</main>
+
+<script>
+const COLORS = {
+  adaptativo_neurona: "#58a6ff",
+  referencia_10m: "#3fb950",
+  referencia_1h: "#d29922",
+  media_ultimas_5: "#bc8cff",
+  ultimo_hashrate: "#f85149",
+  ridge_live: "#79c0ff",
+};
+const SHORT = {
+  adaptativo_neurona: "adaptativo",
+  referencia_10m: "ref_10m",
+  referencia_1h: "ref_1h",
+  media_ultimas_5: "media_5",
+  ultimo_hashrate: "ultimo",
+  ridge_live: "ridge",
+};
+
+async function fetchData() {
+  try {
+    const r = await fetch("/api/neuron-flow?_=" + Date.now());
+    if (!r.ok) throw new Error("HTTP " + r.status);
+    return await r.json();
+  } catch (e) {
+    document.getElementById("ts").textContent = "ERROR: " + e.message;
+    return null;
+  }
+}
+
+function renderFlow(data) {
+  const svg = document.getElementById("flow");
+  const W = 900, H = 220, midY = H / 2;
+  const xBitaxe = 60, xCollector = 200, xLearners = 450, xWinner = 700, xVal = 850;
+  const learners = data.learners || [];
+  const winner = data.winner;
+
+  // edges bitaxe -> collector -> learners
+  svg.innerHTML = "";
+  const edges = [];
+  function addEdge(x1, y1, x2, y2, active) {
+    const p = document.createElementNS("http://www.w3.org/2000/svg", "path");
+    p.setAttribute("d", `M${x1},${y1} C${x1+40},${y1} ${x2-40},${y2} ${x2},${y2}`);
+    p.setAttribute("class", "edge" + (active ? " active" : ""));
+    svg.appendChild(p);
+  }
+  addEdge(xBitaxe + 20, midY, xCollector - 20, midY, true);
+  addEdge(xCollector + 20, midY, xLearners - 30, midY, true);
+
+  // fan out a learners
+  const step = H / (learners.length + 1);
+  learners.forEach((l, i) => {
+    const ly = step * (i + 1);
+    addEdge(xLearners, midY, xWinner - 40, midY, l.method === winner);
+    addEdge(xWinner + 40, midY, xVal - 30, midY, true);
+  });
+
+  // nodes
+  function addNode(x, y, label, sub, cls) {
+    const g = document.createElementNS("http://www.w3.org/2000/svg", "g");
+    const c = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+    c.setAttribute("cx", x); c.setAttribute("cy", y); c.setAttribute("r", 22);
+    c.setAttribute("class", "node " + (cls || ""));
+    g.appendChild(c);
+    const t = document.createElementNS("http://www.w3.org/2000/svg", "text");
+    t.setAttribute("x", x); t.setAttribute("y", y + 3); t.setAttribute("class", "node-text");
+    t.textContent = label; g.appendChild(t);
+    if (sub) {
+      const s = document.createElementNS("http://www.w3.org/2000/svg", "text");
+      s.setAttribute("x", x); s.setAttribute("y", y + 38); s.setAttribute("class", "node-sub");
+      s.textContent = sub; g.appendChild(s);
+    }
+    svg.appendChild(g);
+  }
+
+  addNode(xBitaxe, midY, "Bitaxe", "1 TH/s", "bitaxe");
+  addNode(xCollector, midY, "Collect", "60s", "");
+  learners.forEach((l, i) => {
+    const ly = step * (i + 1);
+    addNode(xLearners, ly, SHORT[l.method] || l.method, l.ape_mean_recent + "%", "learner" + (l.method === winner ? " winner" : ""));
+  });
+  addNode(xWinner, midY, "Ganador", winner ? SHORT[winner] : "—", "learner winner");
+  addNode(xVal, midY, "Eval", "APE", "val");
+}
+
+function renderLastPrediction(data) {
+  const p = data.last_prediction;
+  document.getElementById("predVal").textContent = p ? p.predicted + " GH/s" : "—";
+  document.getElementById("actualVal").textContent = p ? p.actual + " GH/s" : "—";
+  document.getElementById("apeVal").textContent = p ? p.ape.toFixed(2) + "%" : "—";
+  document.getElementById("methodVal").textContent = p ? (SHORT[p.method] || p.method) : "—";
+}
+
+function renderLearners(data) {
+  const box = document.getElementById("learnersBox");
+  box.innerHTML = "";
+  const max = Math.max(...(data.learners || []).map(l => l.ape_mean_recent), 3);
+  (data.learners || []).sort((a,b) => a.ape_mean_recent - b.ape_mean_recent).forEach(l => {
+    const row = document.createElement("div");
+    row.className = "learner-row";
+    const pct = (l.ape_mean_recent / max) * 100;
+    row.innerHTML = `
+      <div class="learner-name">${l.is_winner ? "🏆 " : ""}${SHORT[l.method] || l.method}</div>
+      <div class="bar"><div class="bar-fill${l.is_winner ? " winner" : ""}" style="width:${pct}%"></div></div>
+      <div class="bar-value">${l.ape_mean_recent}%</div>
+      <div class="bar-weight">w=${(l.is_champion_weight*100).toFixed(0)}%</div>`;
+    box.appendChild(row);
+  });
+}
+
+function renderChampion(data) {
+  const box = document.getElementById("championBox");
+  const c = data.champion || {};
+  const weights = c.weights || {};
+  const items = Object.entries(weights).sort((a,b) => b[1] - a[1]);
+  box.innerHTML = `
+    <div style="color:var(--dim); font-size:11px; margin-bottom:8px;">
+      APE champion: <b style="color:var(--ok)">${(c.ape_mean || 0).toFixed(4)}%</b>
+    </div>
+    ${items.map(([k,v]) => `
+      <div class="learner-row">
+        <div class="learner-name">${SHORT[k] || k}</div>
+        <div class="bar"><div class="bar-fill" style="width:${(v*100).toFixed(0)}%; background:${COLORS[k] || '#58a6ff'}"></div></div>
+        <div class="bar-value">${(v*100).toFixed(1)}%</div>
+      </div>
+    `).join("")}
+  `;
+}
+
+function renderEvolutions(data) {
+  const box = document.getElementById("evolBox");
+  box.innerHTML = "";
+  (data.evolutions || []).slice().reverse().forEach(e => {
+    const row = document.createElement("div");
+    row.className = "evol-row";
+    const ts = (e.ts || "").slice(11, 19);
+    row.innerHTML = `<div class="ts">${ts}</div><div class="learner">${e.learner || "?"}</div><div class="kind ${e.kind}">${e.kind}</div>`;
+    box.appendChild(row);
+  });
+}
+
+function renderChart(data) {
+  const canvas = document.getElementById("chart");
+  const ctx = canvas.getContext("2d");
+  const W = canvas.width, H = canvas.height;
+  ctx.clearRect(0, 0, W, H);
+  const series = (data.series || {}).series || {};
+  const names = Object.keys(series);
+  if (!names.length) { ctx.fillStyle = "#8b949e"; ctx.fillText("Sin serie temporal aún", 20, H/2); return; }
+  const allVals = names.flatMap(n => series[n]);
+  const maxV = Math.max(...allVals, 1);
+  const minV = Math.min(...allVals, 0);
+  const range = maxV - minV || 1;
+  const pad = 20;
+  names.forEach(n => {
+    ctx.strokeStyle = COLORS[n] || "#58a6ff";
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    series[n].forEach((v, i) => {
+      const x = pad + (i / (series[n].length - 1 || 1)) * (W - 2*pad);
+      const y = H - pad - ((v - minV) / range) * (H - 2*pad);
+      if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+    });
+    ctx.stroke();
+  });
+  // legend
+  const lg = document.getElementById("legend");
+  lg.innerHTML = names.map(n => `<span><span class="dot" style="background:${COLORS[n] || '#58a6ff'}"></span>${SHORT[n] || n}</span>`).join("");
+}
+
+async function tick() {
+  const data = await fetchData();
+  if (!data) return;
+  document.getElementById("ts").textContent = "actualizado " + new Date().toLocaleTimeString();
+  renderFlow(data);
+  renderLastPrediction(data);
+  renderLearners(data);
+  renderChampion(data);
+  renderEvolutions(data);
+  renderChart(data);
+}
+
+tick();
+setInterval(tick, 30000);  // refresca cada 30s
+</script>
+</body>
+</html>
