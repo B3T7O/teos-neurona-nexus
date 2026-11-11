@@ -69,6 +69,14 @@ def main():
                 pass  # Si falla, el scheduler sigue funcionando
             # =============================================
 
+            # === TEOS Best-of-Both Selector (shadow mode) ===
+            try:
+                from core.best_of_both import compute_best_of_both
+                compute_best_of_both()
+            except Exception:
+                pass
+            # =================================================
+
             # === TEOS Ensemble Learner v2-B (shadow mode) ===
             try:
                 from core.ensemble_learner import compute_ensemble
@@ -77,7 +85,7 @@ def main():
                 pass
             # ================================================
             elapsed = time.monotonic() - started
-            time.sleep(max(0, INTERVAL - elapsed))
+            time.sleep(max(10, INTERVAL - elapsed))  # garantizar 10s minimo entre ciclos
 
     except KeyboardInterrupt:
         print("\nProgramador detenido. Historial conservado.")

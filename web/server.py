@@ -18,7 +18,7 @@ ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT))
 from core.audit_reader import build_audit_summary
 WEB = ROOT / "web"
-RAW = ROOT / "data/raw/bitaxe_samples.jsonl"
+RAW = ROOT / "data/raw/bitaxe_samples.marked.jsonl"
 ANALYSIS = ROOT / "data/processed/analysis_history.jsonl"
 NEURON_STATE = ROOT / "data/processed/prospective_eval_state.json"
 NEURON_SIGNALS = ROOT / "data/processed/prospective_signals.jsonl"
@@ -445,7 +445,7 @@ class Handler(SimpleHTTPRequestHandler):
                 _ROOT = _P(__file__).parent.parent
                 
                 # 1. Bitaxe
-                btx_path = _ROOT / "data" / "raw" / "bitaxe_samples.jsonl"
+                btx_path = _ROOT / "data" / "raw" / "bitaxe_samples.marked.jsonl"
                 btx = {}
                 if btx_path.exists():
                     size = btx_path.stat().st_size
@@ -740,7 +740,7 @@ class Handler(SimpleHTTPRequestHandler):
         # FAST /api/status - lectura directa del ultimo sample
         if self.path.startswith("/api/status"):
             try:
-                dp = Path(__file__).parent.parent / "data" / "raw" / "bitaxe_samples.jsonl"
+                dp = Path(__file__).parent.parent / "data" / "raw" / "bitaxe_samples.marked.jsonl"
                 size = dp.stat().st_size
                 with dp.open("rb") as f:
                     if size > 20000:

@@ -150,3 +150,36 @@ For grant inquiries, please reach out via email. For general collaboration, open
 
 *TEOS - Optimize. Distribute. Evolve.*
  
+
+
+---
+
+## Auto-reparacion y evolucion autonoma (v1.1)
+
+A partir del 2026-11-11, TEOS incluye dos procesos autonomicos en produccion:
+
+### tools/auto_healer.py --execute
+- Frecuencia: cada 5 minutos
+- Que hace: verifica los 3 servicios systemd (collector, scheduler, api), el Bitaxe
+  y la frescura del collector. Si algo esta caido, lo reinicia via systemctl restart.
+- Que NO hace: no borra archivos, no modifica codigo, no cambia configuracion.
+- Log: data/healer/healer_log.jsonl
+- Modo simulacion: sin --execute solo reporta, no actua.
+
+### tools/evolve_runner.py --execute
+- Frecuencia: cada 6 horas
+- Que hace: ejecuta core/evolve_lab.py (algoritmo genetico de 100 individuos x
+  50 generaciones) para encontrar los pesos optimos de combinacion de los 5 metodos
+  de prediccion. Guarda el campeon en data/processed/evolve_champion.json.
+- Log: data/evolve/evolve_log.jsonl
+- Modo simulacion: sin --execute solo reporta, no evoluciona.
+
+### tools/backfill_ridge_outcomes.py (one-shot)
+- Rellena outcomes huerfanos del ridge_live (predicciones sin evaluacion).
+- Idempotente: no duplica si ya existe.
+
+### Champion actual (2026-11-11)
+- ape_mean: 2.2668%
+- weights: referencia_1h=0.8294, referencia_10m=0.0928,
+  adaptativo_neurona=0.0585, media_ultimas_5=0.0139, ultimo_hashrate=0.0055
+- El ensamble supera al mejor metodo individual (2.2668% < 2.27%).

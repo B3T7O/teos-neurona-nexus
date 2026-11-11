@@ -7,7 +7,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
-RAW = ROOT / "data/raw/bitaxe_samples.jsonl"
+RAW = ROOT / "data/raw/bitaxe_samples.marked.jsonl"
 OUTPUT = ROOT / "data/processed/learning_method_comparison.json"
 
 
@@ -143,7 +143,7 @@ def main():
     )
     report = {
         "generated_at": datetime.now(timezone.utc).isoformat(),
-        "source": "data/raw/bitaxe_samples.jsonl",
+        "source": "data/raw/bitaxe_samples.marked.jsonl",
         "target": "siguiente muestra válida",
         "comparison": "mismos orígenes y mismos valores reales",
         "uses_future_data_for_prediction": False,

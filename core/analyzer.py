@@ -10,7 +10,7 @@ from core.validation import evaluate_thermal_status
 
 DATA_FILE = (
     Path(__file__).resolve().parent.parent
-    / "data/raw/bitaxe_samples.jsonl"
+    / "data/raw/bitaxe_samples.marked.jsonl"
 )
 
 

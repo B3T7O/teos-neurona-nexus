@@ -8,7 +8,7 @@ from pathlib import Path
 from statistics import mean
 
 ROOT = Path(__file__).resolve().parent.parent
-RAW = ROOT / "data/raw/bitaxe_samples.jsonl"
+RAW = ROOT / "data/raw/bitaxe_samples.marked.jsonl"
 OUT = ROOT / "data/processed"
 STATE = OUT / "prospective_eval_state.json"
 SIGNALS = OUT / "prospective_signals.jsonl"

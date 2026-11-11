@@ -7,7 +7,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
-RAW = ROOT / "data/raw/bitaxe_samples.jsonl"
+RAW = ROOT / "data/raw/bitaxe_samples.marked.jsonl"
 PREDS = ROOT / "data/processed/learning_predictions_v2.jsonl"
 OUTCOMES = ROOT / "data/processed/learning_outcomes_v2.jsonl"
 

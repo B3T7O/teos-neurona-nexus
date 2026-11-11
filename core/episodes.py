@@ -7,7 +7,7 @@ from pathlib import Path
 from statistics import mean
 
 ROOT = Path(__file__).resolve().parent.parent
-RAW_FILE = ROOT / "data/raw/bitaxe_samples.jsonl"
+RAW_FILE = ROOT / "data/raw/bitaxe_samples.marked.jsonl"
 REPORT_FILE = ROOT / "data/processed/episodes_report.json"
 
 THRESHOLD_PCT = 3.0

@@ -20,7 +20,7 @@ except ModuleNotFoundError:
     import contextual_error_learner
 
 ROOT = Path(__file__).resolve().parents[1]
-RAW = ROOT / "data/raw/bitaxe_samples.jsonl"
+RAW = ROOT / "data/raw/bitaxe_samples.marked.jsonl"
 OUT = ROOT / "data/processed"
 PREDICTIONS = OUT / "learning_predictions_v2.jsonl"
 OUTCOMES = OUT / "learning_outcomes_v2.jsonl"

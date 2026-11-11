@@ -7,7 +7,7 @@ from datetime import datetime
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
-RAW = ROOT / "data/raw/bitaxe_samples.jsonl"
+RAW = ROOT / "data/raw/bitaxe_samples.marked.jsonl"
 OUT = ROOT / "data/processed"
 PREDICTIONS = OUT / "learning_predictions.jsonl"
 OUTCOMES = OUT / "learning_outcomes.jsonl"

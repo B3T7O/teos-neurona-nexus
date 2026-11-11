@@ -11,7 +11,7 @@ import numpy as np
 
 ROOT = Path(__file__).resolve().parents[1]
 
-SNAPSHOT = ROOT / "experiments/frozen_bitaxe_samples.jsonl"
+SNAPSHOT = ROOT / "experiments/frozen_bitaxe_samples.marked.jsonl"
 MANIFEST = ROOT / "experiments/frozen_evaluation_manifest.json"
 SCRIPT = ROOT / "experiments/first_learning_model.py"
 ORIGINAL = ROOT / "experiments/first_learning_model_report.json"

@@ -7,7 +7,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
-RAW = ROOT / "data/raw/bitaxe_samples.jsonl"
+RAW = ROOT / "data/raw/bitaxe_samples.marked.jsonl"
 REPORT = ROOT / "data/processed/learning_continuous_report.json"
 WINDOW = 100
 
@@ -203,7 +203,7 @@ def main():
 
     report = {
         "generated_at": datetime.now(timezone.utc).isoformat(),
-        "source": "data/raw/bitaxe_samples.jsonl",
+        "source": "data/raw/bitaxe_samples.marked.jsonl",
         "mode": "evaluación retrospectiva de un paso",
         "target": "siguiente muestra válida",
         "uses_future_data_for_prediction": False,

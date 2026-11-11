@@ -19,7 +19,7 @@ from pathlib import Path
 import numpy as np
 
 ROOT = Path(__file__).resolve().parents[1]
-RAW = ROOT / "data/raw/bitaxe_samples.jsonl"
+RAW = ROOT / "data/raw/bitaxe_samples.marked.jsonl"
 OUT = ROOT / "data/processed"
 PRED = OUT / "ridge_live_predictions.jsonl"
 RESULTS = OUT / "ridge_live_outcomes.jsonl"

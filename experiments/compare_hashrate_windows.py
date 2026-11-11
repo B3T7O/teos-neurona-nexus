@@ -5,7 +5,7 @@ from pathlib import Path
 from statistics import mean
 
 ROOT = Path(".")
-SOURCE = ROOT / "data/raw/bitaxe_samples.jsonl"
+SOURCE = ROOT / "data/raw/bitaxe_samples.marked.jsonl"
 REPORT = ROOT / "experiments/hashrate_window_comparison.json"
 WINDOW = 5
 

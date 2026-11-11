@@ -5,7 +5,7 @@ from pathlib import Path
 
 import numpy as np
 
-SNAPSHOT = Path("experiments/frozen_bitaxe_samples.jsonl")
+SNAPSHOT = Path("experiments/frozen_bitaxe_samples.marked.jsonl")
 MANIFEST = Path("experiments/frozen_evaluation_manifest.json")
 OUTPUT = Path("experiments/first_learning_model_report.json")
 

@@ -4,7 +4,7 @@ import math
 from pathlib import Path
 from statistics import mean
 
-snapshot = Path("experiments/frozen_bitaxe_samples.jsonl")
+snapshot = Path("experiments/frozen_bitaxe_samples.marked.jsonl")
 manifest_path = Path("experiments/frozen_evaluation_manifest.json")
 output = Path("experiments/walkforward_baseline_report.json")
 

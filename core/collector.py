@@ -11,11 +11,12 @@ from pathlib import Path
 from urllib.request import urlopen
 
 from core.validation import validate_bitaxe_record
+from core.sample_quality import classify
 
 import os
 BITAXE_IP = os.environ.get("BITAXE_IP", "192.168.1.100")
 URL = f"http://{BITAXE_IP}/api/system/info"
-OUTPUT = Path(__file__).resolve().parent.parent / "data/raw/bitaxe_samples.jsonl"
+OUTPUT = Path(__file__).resolve().parent.parent / "data/raw/bitaxe_samples.marked.jsonl"
 INTERVAL = 60
 
 FIELDS = (
@@ -40,9 +41,14 @@ def capture():
         if field in device:
             sample[field] = device[field]
 
+    sample["quality"] = classify(sample)
+
     valid, message = validate_bitaxe_record(sample)
     if not valid:
         raise ValueError(message)
+
+    if sample["quality"] != "ok":
+        print(f"  ADVERTENCIA: sample marcado como {sample['quality']}")
 
     OUTPUT.parent.mkdir(parents=True, exist_ok=True)
     with OUTPUT.open("a", encoding="utf-8") as file:

@@ -3,7 +3,7 @@ from datetime import datetime
 from pathlib import Path
 
 root = Path(".")
-source = root / "data/raw/bitaxe_samples.jsonl"
+source = root / "data/raw/bitaxe_samples.marked.jsonl"
 report = root / "experiments/hashrate_audit_report.json"
 
 audit = json.loads(report.read_text(encoding="utf-8"))

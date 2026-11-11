@@ -1,0 +1,164 @@
+# Experimentos TEOS Neurona Nexus
+
+## EXP-001 — Baseline de referencia
+- **Fecha**: 2026-10-21
+- **Hipótesis**: medias móviles simples (10m, 1h) predicen hashrate a 1 minuto.
+- **Resultado**: `referencia_1h` y `referencia_10m` son competitivas (≈2.27% APE media).
+- **Conclusión**: difíciles de batir. Cualquier modelo nuevo debe superarlas o
+  justificar su complejidad con otra métrica (p95, robustez, etc).
+
+## EXP-002 — Feature "bloques hasta próximo ajuste de dificultad"
+- **Fecha**: 2026-11-10
+- **Hipótesis**: el error de predicción varía según la fase del ciclo de 2016 bloques.
+- **Método**: cuartiles + validación temporal 70/30 + intersección de timestamps
+  + ventana común desde la primera predicción de `adaptativo_neurona`.
+- **Resultado**: `referencia_1h` gana los 4 bins. `adaptativo_neurona` nunca gana
+  (2.281–2.319% vs 2.242–2.303% de referencia_1h).
+- **Conclusión**: ❌ **DESCARTADA.** No aporta información.
+
+## EXP-003 — Feature "días hasta el próximo halving"
+- **Fecha**: 2026-11-10
+- **Hipótesis**: el error varía según proximidad al halving.
+- **Resultado**: span de la feature en los datos = 21.5 días. Degenerada.
+- **Conclusión**: ❌ **DESCARTADA.** Requiere ≥4 años de histórico para testear.
+
+## EXP-004 — Diagnóstico de outliers y calidad de datos
+- **Fecha**: 2026-11-10
+- **Hallazgo**: 64 outliers (APE > 50%) concentrados el 2026-10-22 22:34–23:26.
+- **Causa raíz**: 1 sample corrupto del Bitaxe (`hashRate=81806 GH/s` a 525 MHz/20 W,
+  físicamente imposible). Contaminó ventanas móviles; `referencia_1h` lo arrastró 60 min.
+- **Acciones**:
+  - `tools/clean_invalid_samples.py` → `bitaxe_samples.clean.jsonl` (sin spikes)
+  - `tools/mark_sample_quality.py` → `bitaxe_samples.marked.jsonl` (con campo `quality`)
+- **Conclusión**: ✅ **Dataset saneado.** El spike no afecta a los análisis con cutoff
+  ≥ 2026-10-23 05:10 (ventana común). `adaptativo_neurona` parecía robusto porque
+  empezó a predecir *después* del spike, no por diseño.
+
+## EXP-005 — Comparación honesta en ventana común
+- **Fecha**: 2026-11-10
+- **Método**: `tools/analyze_cycle_events.py v4`, cutoff 2026-10-23 05:10.
+- **Resultado**:
+  | Método | media | mediana |
+  |---|---|---|
+  | referencia_10m | 2.27% | 1.91% |
+  | referencia_1h | 2.27% | 1.91% |
+  | adaptativo_neurona | 2.30% | 1.93% |
+  | media_ultimas_5 | 2.48% | 2.06% |
+  | ultimo_hashrate | 3.21% | 2.72% |
+- **Conclusión**: `adaptativo_neurona` **no supera** a los baselines simples en
+  ventana limpia. Los baselines de referencia son el objetivo a batir.
+
+## Próximos experimentos (no urgentes)
+- Features de micro-entorno: volatilidad rolling, momentum, hora del día,
+  temperatura, ratio short/long term.
+- Controlador predictivo (bajar frecuencia antes de que suba temperatura).
+- Baselines robustos (pasar `filter_contextual_anomalies` a todos por igual).
+
+
+## EXP-006 — Detector de anomalías (Opción C)
+- **Fecha**: 2026-11-10
+- **Hipótesis**: es posible detectar anomalías operativas (temp alta, wifi débil,
+  hashrate caído) con z-score rolling sobre el estado normal del hardware.
+- **Método**: train 70% / test 30% + z-score rolling (ventana 5, umbral 3σ)
+  + **piso de desviación absoluta** por feature para evitar alertas en features
+  casi constantes (errorPercentage tenía std=0.02 → generaba 6713 falsas alarmas).
+- **Resultado**:
+  - Falsos positivos en test real: 17/8179 = **0.21%**
+  - Test sintético (3 anomalías inyectadas): **detecta las 3**
+    - temp +20°C → 9 alertas (z hasta +99)
+    - wifi -95 dBm → 22 alertas (z hasta -5.75)
+    - hashrate/2 → 9 alertas (z hasta -11.25)
+- **Artefacto**: `data/processed/anomaly_model.json` (mean/std/abs_min por feature).
+- **Conclusión**: ✅ **Detector operativo.** Listo para integrarse como guardián
+  en `learning_loop_v2.py`. Evento real encontrado: caída de WiFi 2026-11-08 15:10.
+
+## EXP-007 — Predictor de temperatura + control térmico (Opción D)
+- **Fecha**: 2026-11-10
+- **Hipótesis**: se puede predecir `temp(t+1)` mejor que "copiar temp(t)"
+  y usar esa predicción para control térmico anticipado.
+- **Método**: Ridge con features térmicas (temp_now, delta5, delta10, vrTemp,
+  power, voltage, freq, hashrate, hora, día semana).
+- **Resultado**:
+  - baseline (copia) MAE = 0.114°C, p95 = 0.250°C
+  - modelo_ridge  MAE = 0.091°C, p95 = 0.230°C
+  - **Δ = +0.023°C mejor** (mejora técnica, pequeña en magnitud)
+  - Simulación de control: 0 alertas reactivas y 0 predictivas (temp nunca >65°C)
+  - Coeficientes casi cero → el modelo se reduce a "copia con ajuste mínimo"
+- **Causa de la mejora pequeña**: inercia térmica enorme (temp ~60°C, std 0.12°C).
+  `temp(t+1) ≈ temp(t)` ya es casi perfecto.
+- **Artefacto**: `data/processed/temp_model.json`.
+- **Conclusión**: ✅ modelo funcional pero **sin urgencia operativa hoy**.
+  Guardado como componente de reserva. Se activará cuando:
+  - la temperatura ambiente suba (verano),
+  - se aumente frecuencia,
+  - o el firmware cambie el perfil térmico.
+  **Limitación honesta**: sin eventos cerca del umbral, el control no está
+  validado en producción. Solo la predicción lo está.
+
+## EXP-008 — Features de micro-entorno (descartadas)
+- **Fecha**: 2026-11-10
+- **Hipótesis**: temp, hora, momentum, volatilidad, ratio ayudan a predecir hashrate.
+- **Resultado**: modelo_ridge (2.26% APE) ≈ h1h baseline (2.25% APE). Sin mejora.
+- **Conclusión**: ❌ **DESCARTADAS.** Las features no aportan sobre `h1h` a 1 minuto.
+
+## EXP-009 — Baselines robustos (mediana, trimmed mean)
+- **Fecha**: 2026-11-10
+- **Hipótesis**: mediana o trimmed mean 10% superan a media simple en referencia_10m/1h.
+- **Método**: comparar tres estadísticos en ventanas de 10m y 60m, sobre samples `quality=ok`.
+- **Resultado**:
+  - Ventana 10m: media **2.37%**, mediana 2.43%, trimmed10 2.38% → **gana media**
+  - Ventana 60m: media **2.28%**, mediana 2.28%, trimmed10 2.28% → **empate**
+- **Conclusión**: ✅ **Sin cambios necesarios.** Al filtrar spikes, la media simple ya no se contamina. Mediana/trimmed solo aportan si hay outliers, y ya no los hay en `quality=ok`. Los baselines actuales son correctos.
+
+## EXP-010 — Filtro en ingesta (collector)
+- **Fecha**: 2026-11-10
+- **Hipótesis**: clasificar el sample en la captura previene contaminación futura sin perder trazabilidad.
+- **Método**: `core/collector.py` llama a `core.sample_quality.classify()` antes de escribir. Los `corrupt_spike` se escriben igualmente (trazabilidad) pero logean advertencia.
+- **Artefacto**: `core/sample_quality.py` (módulo reutilizable).
+- **Conclusión**: ✅ **Filtro aplicado en origen.** Los samples entran ya clasificados con `quality`. Cualquier análisis posterior puede confiar en `quality=ok` sin pasos extra.
+
+## EXP-011 — Estimaciones temporales y económicas
+- **Fecha**: 2026-11-10
+- **Método**: `tools/estimaciones.py` calcula desde el último sample:
+  bloques al ajuste, al halving, hashrate de red estimado, probabilidad de bloque solo.
+- **Resultado** (último sample, altura 975357):
+  - Próximo ajuste: 387 bloques → **2.69 días**
+  - Próximo halving: 74,643 bloques → **518 días (1.42 años)**
+  - Hashrate de red: **1,062,034 PH/s ≈ 1062 EH/s**
+  - Probabilidad de bloque solo: 1.01e-9 por bloque → **18,800 años esperados**
+  - Shares esperados: **900/hora** (pool diff 1000)
+- **Conclusión**: estimaciones coherentes con la realidad de la red en 2026.
+  Confirman matemáticamente la necesidad de minar en pool con un Bitaxe de 1 TH/s.
+
+## EXP-012 — Coherencia de shares (test de salud pool/miner)
+- **Fecha**: 2026-11-10
+- **Método**: `tools/shares_coherence.py` compara `sharesAccepted` reales (delta por
+  intervalo) vs esperados (`hashRate × dt / (poolDiff × 2^32)`).
+- **Resultado**:
+  - Ratio real/esperado (mediana): **0.982** ✅ (ideal = 1.000)
+  - Media: 1.029, P05/P95: 0.507 / 1.468 (rango esperado por aleatoriedad)
+  - Tasa de rechazo: mediana **0.000%**, media **0.146%** ✅ (<5% crítico)
+  - Reinicios detectados: 17 en 22 días (revisable, no urgente)
+  - Intervalos con d_sa=0: normales (suerte del pool en intervalos cortos)
+- **Conclusión**: ✅ **Pool y miner sanos.** Rendimiento real coincide con el esperado
+  matemáticamente. Rechazo prácticamente nulo. Único apunte operativo: 17 reinicios
+  en 22 días, revisar si son automáticos o no.
+
+## EXP-013 — Backfill de outcomes del ridge_live
+- **Fecha**: 2026-11-11
+- **Síntoma**: audit reportaba `[FAIL] Cobertura eval (ridge_live): 58.4% (14304/24479)`
+- **Causa raíz**: el evaluador en vivo (`continuous_learning_evaluator.py` /
+  `learning_loop_v2.py`) solo procesa las predicciones más recientes del ridge,
+  no el histórico completo. Cada ciclo se acumulaban huérfanas.
+- **Método**: `tools/backfill_ridge_outcomes.py` recorre predicciones sin outcome,
+  empareja con la primera muestra real posterior (vía `bisect_right` sobre timestamps),
+  y calcula el outcome (error, APE, etc.). Idempotente: no duplica.
+- **Resultado**:
+  - Huérfanas procesadas: 10,171
+  - Outcomes escritos: 10,171 (0 sin match)
+  - Total outcomes: 78,565 → 88,736
+  - **Cobertura: 58.4% → 100.0%**
+  - Audit: `CRITICO (1 fallo)` → `ADVERTENCIA (0 fallos)`
+- **Conclusión**: ✅ **Fallo resuelto.** El evaluador en vivo sigue funcionando igual
+  (no se tocó). Este fix solo rellena el histórico. Si en el futuro vuelven a
+  acumularse huérfanas, es señal de que el evaluador necesita revisarse.

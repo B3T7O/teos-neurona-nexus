@@ -7,7 +7,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
-RAW = ROOT / "data/raw/bitaxe_samples.jsonl"
+RAW = ROOT / "data/raw/bitaxe_samples.marked.jsonl"
 REPORT = ROOT / "data/processed/learning_temporal_validation.json"
 
 
@@ -158,7 +158,7 @@ def main():
 
     report = {
         "generated_at": datetime.now(timezone.utc).isoformat(),
-        "source": "data/raw/bitaxe_samples.jsonl",
+        "source": "data/raw/bitaxe_samples.marked.jsonl",
         "target": "siguiente muestra válida",
         "split": "cronológico 70/30, sin barajar",
         "uses_future_data_for_prediction": False,

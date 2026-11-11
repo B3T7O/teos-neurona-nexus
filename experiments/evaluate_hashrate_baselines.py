@@ -10,7 +10,7 @@ from pathlib import Path
 from statistics import mean
 
 ROOT = Path(__file__).resolve().parents[1]
-SOURCE = ROOT / "data/raw/bitaxe_samples.jsonl"
+SOURCE = ROOT / "data/raw/bitaxe_samples.marked.jsonl"
 TRAIN_FRACTION = 0.70
 WINDOW = 5
 

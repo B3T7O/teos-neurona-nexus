@@ -49,7 +49,7 @@ TS_FIELDS = {
     "analysis_history": "analysis_time",
 }
 FILES = {
-    "bitaxe_samples": DATA_RAW / "bitaxe_samples.jsonl",
+    "bitaxe_samples": DATA_RAW / "bitaxe_samples.marked.jsonl",
     "bitaxe_control": DATA_RAW / "bitaxe_control.jsonl",
     "learning_outcomes_v2": DATA_PROC / "learning_outcomes_v2.jsonl",
     "ridge_live_predictions": DATA_PROC / "ridge_live_predictions.jsonl",

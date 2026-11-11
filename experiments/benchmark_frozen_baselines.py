@@ -6,7 +6,7 @@ from pathlib import Path
 from statistics import mean
 
 ROOT = Path(".")
-SNAPSHOT = ROOT / "experiments/frozen_bitaxe_samples.jsonl"
+SNAPSHOT = ROOT / "experiments/frozen_bitaxe_samples.marked.jsonl"
 MANIFEST = ROOT / "experiments/frozen_evaluation_manifest.json"
 OUTPUT = ROOT / "experiments/frozen_baseline_benchmark.json"
 

@@ -23,7 +23,7 @@ GENERATIONS = 50
 SURVIVORS = 20
 MUTATION_RATE = 0.10
 MUTATION_MAGNITUDE = 0.10
-MAX_OUTCOMES = 20000  # limitar a 20k para velocidad (sigue siendo representativo)
+MAX_OUTCOMES = 200000  # limitar a 20k para velocidad (sigue siendo representativo)
 
 METHODS = [
     "adaptativo_neurona",

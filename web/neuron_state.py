@@ -62,7 +62,7 @@ def _parse(s):
 def _compute_state():
     now = datetime.now(timezone.utc)
 
-    samples = _tail_bytes(RAW / "bitaxe_samples.jsonl", 30_000)[-60:]
+    samples = _tail_bytes(RAW / "bitaxe_samples.marked.jsonl", 30_000)[-60:]
     outcomes = _tail_bytes(PROC / "learning_outcomes_v2.jsonl", 60_000)[-400:]
     analysis = _tail_bytes(PROC / "analysis_history.jsonl", 20_000)[-3:]
 

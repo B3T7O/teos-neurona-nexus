@@ -9,7 +9,7 @@ from pathlib import Path
 from datetime import datetime, timezone
 
 ROOT = Path(__file__).resolve().parent.parent
-SAMPLES = ROOT / "data" / "raw" / "bitaxe_samples.jsonl"
+SAMPLES = ROOT / "data" / "raw" / "bitaxe_samples.marked.jsonl"
 STATE = ROOT / "data" / "processed" / "bestshare_state.json"
 
 

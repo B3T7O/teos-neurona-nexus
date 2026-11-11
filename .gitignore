@@ -48,3 +48,5 @@ data/audit/
 
 # Guardian runtime data (regenerates every 60s)
 data/guardian/
+data/healer/
+data/evolve/

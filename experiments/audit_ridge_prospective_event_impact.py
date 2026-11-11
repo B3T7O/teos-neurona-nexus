@@ -14,7 +14,7 @@ sys.path.insert(0, str(ROOT / "experiments"))
 
 import evaluate_ridge_prospective as ev
 
-SNAPSHOT = ROOT / "experiments/frozen_bitaxe_samples.jsonl"
+SNAPSHOT = ROOT / "experiments/frozen_bitaxe_samples.marked.jsonl"
 SCRIPT = ROOT / "experiments/first_learning_model.py"
 ORIGINAL = ROOT / "experiments/first_learning_model_report.json"
 PROSPECTIVE = ROOT / "experiments/ridge_prospective_report.json"

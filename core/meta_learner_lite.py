@@ -15,10 +15,12 @@ OUTCOMES = Path("data/processed/learning_outcomes_v2.jsonl")
 OUTPUT = Path("data/processed/meta_learner_recommendations.jsonl")
 
 WINDOWS = [
+    ("30min", 15_000),
     ("1h", 30_000),
-    ("6h", 180_000),
-    ("12h", 360_000),
-    ("18h", 540_000),
+    ("2h", 60_000),
+    ("4h", 120_000),
+    ("8h", 240_000),
+    ("16h", 480_000),
     ("24h", 720_000),
 ]
 MIN_SAMPLES = 10
@@ -110,7 +112,7 @@ def compute_recommendation():
         "recommended_method": recommended,
         "confidence": confidence,
         "window_winners": window_winners,
-        "window_agreement": f"{top_count}/5",
+        "window_agreement": f"{top_count}/{len(WINDOWS)}",
         "ranking": ranking,
         "mode": "shadow",
         "affects_production": False,

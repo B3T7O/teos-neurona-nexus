@@ -10,7 +10,7 @@ from pathlib import Path
 from statistics import mean, median
 
 ROOT = Path(__file__).resolve().parents[1]
-SOURCE = ROOT / "data/raw/bitaxe_samples.jsonl"
+SOURCE = ROOT / "data/raw/bitaxe_samples.marked.jsonl"
 REPORT = ROOT / "experiments/hashrate_audit_report.json"
 WINDOW = 5
 TRAIN_FRACTION = 0.70
