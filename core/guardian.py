@@ -66,7 +66,7 @@ def _cpu_load_pct():
 
 
 def _bitaxe_ok():
-    ip = os.environ.get("BITAXE_IP", "192.168.18.45")
+    ip = os.environ.get("BITAXE_IP", "192.168.1.100")
     try:
         with urllib.request.urlopen(f"http://{ip}/api/system/info", timeout=3) as r:
             return r.status == 200

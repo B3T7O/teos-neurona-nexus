@@ -70,7 +70,7 @@ El script es solo para arranque manual cuando systemd NO está configurado.
 
 ### tools/auto_healer.py
 - Funcion: reinicia servicios systemd caidos cada 5 minutos.
-- Verifica: 3 servicios (collector, scheduler, api), Bitaxe en 192.168.18.45,
+- Verifica: 3 servicios (collector, scheduler, api), Bitaxe en 192.168.1.100,
   y que el collector escriba muestras frescas (<300s).
 - Modo por defecto: simulacion (solo reporta).
 - Modo real: --execute (reinicia via systemctl restart).

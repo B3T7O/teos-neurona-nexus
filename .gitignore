@@ -50,3 +50,4 @@ data/audit/
 data/guardian/
 data/healer/
 data/evolve/
+.env

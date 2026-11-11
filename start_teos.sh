@@ -8,7 +8,7 @@ flock -n 9 || { echo "⚠️  start_teos.sh ya está en ejecución. Ignorando.";
 cd "$(dirname "$0")"
 
 # Configurar IP del Bitaxe
-export BITAXE_IP=192.168.18.45
+export BITAXE_IP=192.168.1.100
 
 # Matar cualquier proceso viejo
 pkill -9 -f "core.collector" 2>/dev/null

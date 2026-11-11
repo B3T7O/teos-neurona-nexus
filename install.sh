@@ -42,7 +42,7 @@ mkdir -p data/raw data/processed data/healer data/evolve data/audit data/guardia
 echo "Estructura de directorios creada."
 
 # 5. Configurar BITAXE_IP
-BITAXE_IP="${BITAXE_IP:-192.168.18.45}"
+BITAXE_IP="${BITAXE_IP:-192.168.1.100}"
 echo ""
 echo "Bitaxe IP: $BITAXE_IP (puedes cambiarla editando core/collector.py)"
 echo "  Actualmente en: $(grep -m1 'BITAXE_IP' core/collector.py || echo 'no encontrada')"

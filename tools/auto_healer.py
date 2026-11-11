@@ -17,7 +17,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
 LOG = ROOT / "data" / "healer" / "healer_log.jsonl"
-BITAXE_IP = "192.168.18.45"
+BITAXE_IP = "192.168.1.100"
 SERVICES = [
     "teos-nexus-collector.service",
     "teos-neurona-scheduler.service",
