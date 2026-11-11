@@ -2,7 +2,7 @@
 # SPDX-License-Identifier: Apache-2.0
 #
 # TEOS Neurona Nexus - Reference Implementation
-# https://github.com/[TU_USUARIO]/teos-neurona-nexus
+# https://github.com/B3T7O/teos-neurona-nexus
 
 """
 TEOS Neurona Nexus - Estado de animo de la neurona.

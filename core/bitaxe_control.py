@@ -3,7 +3,7 @@
 # SPDX-License-Identifier: Apache-2.0
 #
 # TEOS Neurona Nexus - Reference Implementation
-# https://github.com/[TU_USUARIO]/teos-neurona-nexus
+# https://github.com/B3T7O/teos-neurona-nexus
 
 """Controlador conservador de Bitaxe Gamma. Por defecto, solo simula."""
 import argparse
