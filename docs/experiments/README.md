@@ -241,3 +241,24 @@
   igual que el reactivo (porque temp(t+1) ~= temp(t)). Su valor aparece cuando
   la temperatura empiece a subir (verano, cambio de frecuencia, mas carga).
 - **Conclusion**: disponible como red de seguridad. No urgente activarlo hoy.
+
+
+## EXP-016 — Ventanas de referencia (10m / 30m / 60m / 120m)
+- **Fecha**: 2026-11-11
+- **Hipotesis**: una ventana mas corta (30m) podria mejorar la referencia
+  al adaptarse mas rapido a cambios recientes.
+- **Metodo**: calcular media movil de 10, 30, 60, 120 min sobre los mismos
+  samples, evaluar APE contra el siguiente valor real.
+- **Resultado**:
+  | Ventana | mean | median | p95 |
+  |---|---|---|---|
+  | 10m | 2.353% | 2.004% | 5.669% |
+  | 30m | 2.300% | 1.982% | 5.545% |
+  | 60m | 2.282% | 1.962% | 5.514% |
+  | 120m | 2.275% | 1.959% | 5.467% |
+- **Conclusion**: La hipotesis era incorrecta. Ventanas mas largas ganan porque
+  el hashrate es muy estable y promediar mas tiempo cancela mas ruido del pool.
+  La diferencia 60m vs 120m (0.007pp) es ruido, no mejora real. 120m tarda 2h
+  en reaccionar a cambios. **60m se mantiene como el equilibrio optimo.**
+- **Leccion**: en hardware estable, la reactividad no ayuda. El ruido se combate
+  con promediado, no con velocidad de respuesta.
