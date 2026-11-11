@@ -1,0 +1,4 @@
+# TEOS Neurona Nexus - dependencias externas
+# Instalar con: pip install -r requirements.txt
+
+numpy>=1.24.0
