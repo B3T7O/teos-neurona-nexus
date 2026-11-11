@@ -62,3 +62,64 @@ Scripts one-shot para análisis, no producción. Los nuevos de hoy:
 ## Regla de oro
 **Si systemd tiene los servicios enabled, NO usar `start_teos.sh`**.
 El script es solo para arranque manual cuando systemd NO está configurado.
+
+
+---
+
+## Procesos autonomos (v1.1, 2026-11-11)
+
+### tools/auto_healer.py
+- Funcion: reinicia servicios systemd caidos cada 5 minutos.
+- Verifica: 3 servicios (collector, scheduler, api), Bitaxe en 192.168.18.45,
+  y que el collector escriba muestras frescas (<300s).
+- Modo por defecto: simulacion (solo reporta).
+- Modo real: --execute (reinicia via systemctl restart).
+- Log: data/healer/healer_log.jsonl.
+- Estado: corriendo con --execute desde 2026-11-11.
+
+### tools/evolve_runner.py
+- Funcion: ejecuta core/evolve_lab.py (algoritmo genetico) cada 6 horas.
+- Encuentra pesos optimos de los 5 metodos de prediccion.
+- Guarda campeon en data/processed/evolve_champion.json.
+- Modo real: --execute.
+- Log: data/evolve/evolve_log.jsonl.
+- Estado: corriendo con --execute desde 2026-11-11.
+
+### core/evolution_history.py
+- Funcion: historial central de evoluciones de todos los learners.
+- API:
+  - record(learner, kind, detail, extra=None)
+  - read_all(limit=200)
+  - summarize_by_learner()
+- Log: data/evolve/history.jsonl (append-only).
+- Quien registra:
+  - core/scheduler.py registra 7 learners cada ciclo:
+    learning_loop_v2, ridge_live, bitaxe_control, prospective_eval,
+    meta_learner_lite, best_of_both, ensemble_learner.
+  - tools/evolve_runner.py registra evolve_lab.
+- Herramientas:
+  - tools/show_evolution_history.py (CLI)
+  - tools/backfill_evolution_history.py (rellenar historico)
+
+## Flujo del sistema
+
+    Bitaxe --HTTP--> collector --> data/raw/bitaxe_samples.marked.jsonl
+                                          |
+                                          v
+                              scheduler (cada 5 min)
+                                          |
+              +----------+----------+-----+-----+----------+
+              |          |          |           |          |
+              v          v          v           v          v
+        learning   ridge_live  meta_learner  ensemble  best_of_both
+              |          |          |           |          |
+              +----------+----------+-----+-----+----------+
+                                          |
+                                          v
+                            core/evolution_history.py
+                                          |
+                                          v
+                            data/evolve/history.jsonl
+
+    auto_healer (5 min)  --> vigila 3 servicios + Bitaxe
+    evolve_runner (6 h)  --> evolve_lab.py --> evolve_champion.json
