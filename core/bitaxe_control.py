@@ -34,11 +34,120 @@ def patch_json(path, payload):
         body = response.read().decode()
         return json.loads(body) if body else {}
 
+
+def read_last_samples(n=10):
+    """Lee las ultimas n muestras validas de bitaxe_samples.marked.jsonl."""
+    path = Path("data/raw/bitaxe_samples.marked.jsonl")
+    if not path.exists():
+        return []
+    try:
+        with path.open("rb") as f:
+            f.seek(0, 2)
+            size = f.tell()
+            chunk = min(size, 200_000)
+            f.seek(size - chunk)
+            lines = f.read().decode("utf-8", errors="ignore").splitlines()
+    except Exception:
+        return []
+    samples = []
+    for ln in reversed(lines):
+        ln = ln.strip()
+        if not ln:
+            continue
+        try:
+            o = json.loads(ln)
+        except Exception:
+            continue
+        if o.get("quality") != "ok":
+            continue
+        samples.append(o)
+        if len(samples) >= n:
+            break
+    return list(reversed(samples))
+
+
+def predict_next_temp():
+    """Predice temp(t+1) usando temp_model.json. Devuelve (pred, error_msg)."""
+    model_path = Path("data/processed/temp_model.json")
+    if not model_path.exists():
+        return None, "temp_model.json no existe"
+    try:
+        model = json.loads(model_path.read_text())
+    except Exception as e:
+        return None, f"error leyendo modelo: {e}"
+    samples = read_last_samples(n=10)
+    if len(samples) < 10:
+        return None, f"solo {len(samples)} muestras disponibles (necesito 10)"
+
+    def num(o, k):
+        v = o.get(k)
+        if isinstance(v, (int, float)) and math.isfinite(v):
+            return float(v)
+        return None
+
+    curr = samples[-1]
+    t_now = num(curr, "temp")
+    t_prev5 = num(samples[-6], "temp")
+    t_prev10 = num(samples[-10], "temp")
+    vr = num(curr, "vrTemp")
+    pw = num(curr, "power")
+    v = num(curr, "voltage")
+    fr = num(curr, "frequency")
+    hr = num(curr, "hashRate")
+    if None in (t_now, t_prev5, t_prev10, vr, pw, v, fr, hr):
+        return None, "faltan campos en la muestra mas reciente"
+    ts = curr.get("timestamp")
+    try:
+        if ts.endswith("Z"):
+            ts = ts[:-1] + "+00:00"
+        dt = datetime.fromisoformat(ts)
+    except Exception:
+        return None, "timestamp invalido"
+    hour = dt.hour
+    dow = dt.weekday()
+    feats = {
+        "temp_now": t_now,
+        "delta5": t_now - t_prev5,
+        "delta10": t_now - t_prev10,
+        "vrTemp": vr,
+        "power": pw,
+        "voltage": v,
+        "frequency": fr,
+        "hashRate": hr,
+        "hour_sin": math.sin(2 * math.pi * hour / 24),
+        "hour_cos": math.cos(2 * math.pi * hour / 24),
+        "dow_sin": math.sin(2 * math.pi * dow / 7),
+        "dow_cos": math.cos(2 * math.pi * dow / 7),
+    }
+    names = model.get("features", [])
+    mu = model.get("mu", [])
+    sigma = model.get("sigma", [])
+    w = model.get("w", [])
+    y_mean = model.get("y_mean", 0.0)
+    if not names or len(names) != len(mu) or len(names) != len(sigma) or len(names) != len(w):
+        return None, "modelo con dimensiones inconsistentes"
+    x = []
+    for i, name in enumerate(names):
+        if name not in feats:
+            return None, f"falta feature {name} en muestra actual"
+        x.append((feats[name] - mu[i]) / (sigma[i] + 1e-8))
+    pred = sum(xi * wi for xi, wi in zip(x, w)) + y_mean
+    return pred, None
+
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument(
         "--apply", action="store_true",
         help="autoriza aplicar el ajuste propuesto al minero"
+    )
+    parser.add_argument(
+        "--predictive", action="store_true",
+        help="usar prediccion termica (temp_model.json) para decidir ANTES del umbral reactivo"
+    )
+    parser.add_argument(
+        "--test-force-temp-pred", type=float, default=None,
+        help="[SOLO TEST] fuerza temp_pred a un valor dado (no aplica al hardware)"
     )
     args = parser.parse_args()
 
@@ -86,6 +195,19 @@ def main():
     if freq not in allowed_freq or voltage not in allowed_voltage:
         raise RuntimeError("La configuración actual no coincide con las opciones AxeOS.")
 
+    # Modo predictivo (opcional)
+    temp_predicted = None
+    predictive_active = getattr(args, "predictive", False)
+    if predictive_active:
+        if getattr(args, "test_force_temp_pred", None) is not None:
+            temp_predicted = float(args.test_force_temp_pred)
+            print(f"[TEST] temp_pred forzada a {temp_predicted:.3f}C")
+        else:
+            temp_predicted, err = predict_next_temp()
+            if err:
+                print(f"AVISO: modo predictivo activo pero {err}")
+                temp_predicted = None
+
     # Política conservadora: nunca aumentar frecuencia o voltaje automáticamente.
     target_freq, target_voltage = freq, voltage
     reason = "Sin cambios: configuración actual dentro de los límites."
@@ -97,6 +219,13 @@ def main():
             reason = "Reducir frecuencia por temperatura elevada."
         else:
             reason = "Temperatura elevada; no hay frecuencia inferior disponible."
+    elif predictive_active and temp_predicted is not None and temp_predicted >= 68.0:
+        lower = [f for f in allowed_freq if f < freq]
+        if lower:
+            target_freq = max(lower)
+            reason = f"Reducir frecuencia por temp predicha {temp_predicted:.2f}C >= 68C (predictivo)"
+        else:
+            reason = f"Temp predicha {temp_predicted:.2f}C alta; no hay frecuencia inferior disponible"
     elif hashrate < expected * 0.90:
         reason = "Hashrate muy inferior al esperado; requiere diagnóstico, no overclock automático."
 
@@ -115,6 +244,8 @@ def main():
             "frequency": target_freq, "coreVoltage": target_voltage,
         },
         "reason": reason,
+        "temp_predicted": round(temp_predicted, 4) if temp_predicted is not None else None,
+        "predictive_mode": predictive_active,
     }
 
     try:
@@ -149,6 +280,11 @@ def main():
     print(json.dumps(result, indent=2))
     if not args.apply:
         print("\nSIMULACIÓN: no se modificó el Bitaxe.")
+    if predictive_active:
+        if temp_predicted is not None:
+            print(f"\nMODO PREDICTIVO: temp(t+1) predicha = {temp_predicted:.3f}C (umbral predictivo: 68.0C)")
+        else:
+            print("\nMODO PREDICTIVO: sin prediccion disponible")
 
 if __name__ == "__main__":
     try:

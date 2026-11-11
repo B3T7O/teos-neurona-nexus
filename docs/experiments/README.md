@@ -217,3 +217,27 @@
 - **Artefactos**: data/processed/evolve_champion_v2_*.json (documentacion, NO en produccion)
 - **Leccion**: antes de optimizar el optimizador, verificar que el problema
   tiene margen de mejora. Aqui no lo tiene.
+
+
+## EXP-015 — Control termico predictivo
+- **Fecha**: 2026-11-11
+- **Hipotesis**: usar prediccion de temp(t+1) para bajar frecuencia ANTES de
+  que la temperatura cruce el umbral reactivo (70C), reduciendo riesgo termico.
+- **Metodo**: bitaxe_control.py extendido con flag --predictive (default OFF).
+  Cuando esta activo:
+  - Carga temp_model.json (MAE 0.091C)
+  - Lee ultimas 10 muestras, construye features, predice temp(t+1)
+  - Si temp_pred >= 68C (margen 2C) -> baja frecuencia
+  - Regla de oro intacta: NUNCA sube frecuencia/voltaje automaticamente
+- **Tests**:
+  - Sin --predictive: comportamiento actual intacto (predictive_mode=false)
+  - Con --predictive real: predijo 60.029C, sin cambios (temp estable)
+  - Forzado 69.5C: dispara reduccion de frecuencia correctamente
+  - Forzado 62.0C: no actua, sin falsas alarmas
+- **Estado**: implementado y testeado. NO activado en produccion por defecto.
+  - Para activar manualmente: python3 -m core.bitaxe_control --predictive --apply
+  - Para activar en systemd: editar ExecStart del servicio
+- **Limitacion conocida**: con temp estable a 60C, el predictivo se comporta
+  igual que el reactivo (porque temp(t+1) ~= temp(t)). Su valor aparece cuando
+  la temperatura empiece a subir (verano, cambio de frecuencia, mas carga).
+- **Conclusion**: disponible como red de seguridad. No urgente activarlo hoy.
