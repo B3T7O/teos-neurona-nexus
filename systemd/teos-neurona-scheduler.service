@@ -1,0 +1,17 @@
+[Unit]
+Description=TEOS NEURONA NEXUS - Planificador de aprendizaje
+Wants=network-online.target
+After=network-online.target teos-nexus-collector.service
+
+[Service]
+Type=simple
+User=hp_lapto1234
+WorkingDirectory=/home/hp_lapto1234/teos-neurona-nexus
+ExecStart=/usr/bin/python3 -u -m core.scheduler
+Restart=on-failure
+RestartSec=10
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target

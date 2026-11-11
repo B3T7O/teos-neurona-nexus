@@ -1,0 +1,16 @@
+[Unit]
+Description=TEOS NEURONA NEXUS - Captura Bitaxe
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=hp_lapto1234
+WorkingDirectory=/home/hp_lapto1234/teos-neurona-nexus
+ExecStart=/usr/bin/python3 -u -m core.collector
+Restart=always
+RestartSec=10
+TimeoutStopSec=20
+
+[Install]
+WantedBy=multi-user.target

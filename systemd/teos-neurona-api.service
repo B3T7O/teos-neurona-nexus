@@ -1,0 +1,14 @@
+[Unit]
+Description=TEOS NEURONA NEXUS - API y panel web
+After=network.target
+
+[Service]
+Type=simple
+User=hp_lapto1234
+WorkingDirectory=/home/hp_lapto1234/teos-neurona-nexus
+ExecStart=/usr/bin/python3 -u /home/hp_lapto1234/teos-neurona-nexus/web/server.py
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

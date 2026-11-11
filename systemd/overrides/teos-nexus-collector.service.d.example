@@ -1,0 +1,4 @@
+[Service]
+# IP de tu Bitaxe. Cambiala por la de tu red local.
+# Formato: 192.168.X.X o 10.0.X.X
+Environment="BITAXE_IP=192.168.1.100"
