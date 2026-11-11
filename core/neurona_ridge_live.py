@@ -10,6 +10,14 @@ Lee el historico; registra predicciones y resultados en archivos separados.
 No modifica el colector ni los registros originales.
 """
 
+import sys as _sys
+from pathlib import Path as _Path
+_sys.path.insert(0, str(_Path(__file__).resolve().parent.parent))
+try:
+    from core.evolution_history import record as _evo_record
+except Exception:
+    def _evo_record(*a, **k): pass
+
 import json
 import hashlib
 import math

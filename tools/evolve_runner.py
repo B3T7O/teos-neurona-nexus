@@ -13,6 +13,9 @@ import sys
 import time
 from datetime import datetime, timezone
 from pathlib import Path
+import sys as _sys
+_sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+from core.evolution_history import record
 
 ROOT = Path(__file__).resolve().parent.parent
 LOG = ROOT / "data" / "evolve" / "evolve_log.jsonl"
@@ -37,6 +40,7 @@ def log_event(kind, detail):
 def run_evolve():
     if not EXECUTE:
         log_event("WOULD_EVOLVE", "simulacion, no ejecuta evolve_lab.py")
+        record("evolve_lab", "start", "simulacion")
         return
     log_event("EVOLVE_START", "ejecutando core/evolve_lab.py")
     r = subprocess.run(
@@ -52,6 +56,7 @@ def run_evolve():
             except Exception:
                 pass
         log_event("EVOLVE_OK", f"evolve_lab completado. {champ_info}")
+        record("evolve_lab", "ok", "evolve_lab completado", extra={"champion": champ_info})
     else:
         log_event("EVOLVE_FAILED", f"rc={r.returncode} stderr={r.stderr[-200:]}")
 

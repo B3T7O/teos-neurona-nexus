@@ -10,6 +10,7 @@ import time
 import traceback
 from datetime import datetime
 from core.analyzer import analyze
+from core.evolution_history import record as _evo_record
 from core.prospective_eval import main as evaluate_prospective
 from core.learning_loop_v2 import main as run_learning_loop_v2
 from core.neurona_ridge_live import main as run_ridge_live
@@ -38,6 +39,7 @@ def main():
             if not (_PP(__file__).parent.parent / "data" / "guardian" / "PAUSE_LEARNING").exists():
                 try:
                     run_learning_loop_v2()
+                    _evo_record("learning_loop_v2", "ok", "ejecutado por scheduler")
                 except Exception:
                     print("Error en el ciclo de aprendizaje V2; el programador continuará:")
                     traceback.print_exc()
@@ -46,17 +48,20 @@ def main():
 
             try:
                 run_ridge_live()
+                _evo_record("ridge_live", "ok", "ejecutado por scheduler")
             except Exception:
                 print("Error en el ciclo Ridge experimental; el programador continuará:")
                 traceback.print_exc()
             try:
                 run_bitaxe_control()
+                _evo_record("bitaxe_control", "ok", "ejecutado por scheduler")
             except Exception:
                 print("Error en la comprobación Bitaxe (sin aplicar cambios):")
                 traceback.print_exc()
 
             try:
                 evaluate_prospective()
+                _evo_record("prospective_eval", "ok", "ejecutado por scheduler")
             except Exception:
                 print("Error en la evaluación prospectiva; el programador continuará:")
                 traceback.print_exc()
@@ -65,6 +70,7 @@ def main():
             try:
                 from core.meta_learner_lite import compute_recommendation
                 compute_recommendation()
+                _evo_record("meta_learner_lite", "ok", "ejecutado por scheduler")
             except Exception:
                 pass  # Si falla, el scheduler sigue funcionando
             # =============================================
@@ -73,6 +79,7 @@ def main():
             try:
                 from core.best_of_both import compute_best_of_both
                 compute_best_of_both()
+                _evo_record("best_of_both", "ok", "ejecutado por scheduler")
             except Exception:
                 pass
             # =================================================
@@ -81,6 +88,7 @@ def main():
             try:
                 from core.ensemble_learner import compute_ensemble
                 compute_ensemble()
+                _evo_record("ensemble_learner", "ok", "ejecutado por scheduler")
             except Exception:
                 pass
             # ================================================

@@ -5,6 +5,14 @@ Multi-window selector: looks at 5 time windows (1h, 6h, 12h, 18h, 24h).
 If windows disagree, the method with the best combined median APE wins.
 Does NOT affect production.
 """
+import sys as _sys
+from pathlib import Path as _Path
+_sys.path.insert(0, str(_Path(__file__).resolve().parent.parent))
+try:
+    from core.evolution_history import record as _evo_record
+except Exception:
+    def _evo_record(*a, **k): pass
+
 import json
 import statistics
 from pathlib import Path

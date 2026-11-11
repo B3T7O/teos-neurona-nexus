@@ -4,6 +4,14 @@ TEOS Ensemble Learner v2-B (Challenger)
 Combines predictions from the 5 methods using inverse-error weighting.
 Operates in isolation (shadow mode). Does NOT affect production.
 """
+import sys as _sys
+from pathlib import Path as _Path
+_sys.path.insert(0, str(_Path(__file__).resolve().parent.parent))
+try:
+    from core.evolution_history import record as _evo_record
+except Exception:
+    def _evo_record(*a, **k): pass
+
 import json
 from pathlib import Path
 from datetime import datetime, timezone

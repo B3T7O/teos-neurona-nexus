@@ -11,6 +11,14 @@ Does NOT affect production.
 Author: Luis Alberto Siguencia Andrade (B3T7O)
 License: Apache 2.0
 """
+import sys as _sys
+from pathlib import Path as _Path
+_sys.path.insert(0, str(_Path(__file__).resolve().parent.parent))
+try:
+    from core.evolution_history import record as _evo_record
+except Exception:
+    def _evo_record(*a, **k): pass
+
 import json
 import statistics
 from pathlib import Path
