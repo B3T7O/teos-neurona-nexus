@@ -339,3 +339,23 @@
   - Tarjeta visual en neuron_center.html con colores dinamicos (verde si la dificultad baja).
 - **Resultado**: Panel mostrando -6.96% de cambio de dificultad, congestion ALTA y comisiones de 3 sat/vB.
 - **Conclusion**: ✅ El panel ahora muestra tanto el estado del hardware (Bitaxe) como el contexto de la red (Bitcoin).
+
+
+## EXP-022 — Monitor ECG en Vivo, Drift de Nonces y Crypto Lab
+- **Fecha**: 2026-11-12
+- **Hipotesis**: integrar la salud de la red Bitcoin y el analisis criptografico en un solo panel unificado.
+- **Implementacion**: 
+  - `tools/pulse_series.py`: captura append-only de tiempos de bloque.
+  - `tools/live_pulse.py`: estado del epoch actual para el panel.
+  - `tools/nonce_drift.py`: test KS de distribucion de nonces (Capa 1: red).
+  - `tools/nonce_drift_bitaxe.py`: detector para pool API (Capa 2: MOCK/LIVE).
+  - `web/server.py`: endpoints para live-pulse, pulse-series y nonce-drift.
+  - `web/neuron_center.html`: 
+    - Monitor ECG animado en canvas (latido en vivo).
+    - Crypto Lab unificado (Campana de Gauss + 10k Nonces + Conclusiones).
+    - Eliminacion de graficos estaticos y fantasmas de DOM.
+- **Resultado**: 
+  - El panel muestra el pulso de la red en tiempo real (Promedio 10.28 min, NORMAL).
+  - Detector de deriva (Capa 1) indica KS=0.0753 (ATENCION: ligera desviacion).
+  - La dificultad va a bajar -7.66% en 1.3 dias.
+- **Conclusion**: ✅ El sistema es un centro de comando criptografico completo y visual.

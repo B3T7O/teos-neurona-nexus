@@ -780,6 +780,50 @@ class Handler(SimpleHTTPRequestHandler):
                 self.wfile.write(b'{"error":"neuron_flow.json not generated yet"}')
             return
 
+        if self.path.startswith("/api/lab-image/"):
+            filename = self.path.split("/")[-1].split("?")[0]
+            img_path = ROOT / "data" / "processed" / filename
+            if img_path.exists() and img_path.suffix == ".png":
+                self.send_response(200)
+                self.send_header("Content-Type", "image/png")
+                self.send_header("Cache-Control", "no-store")
+                self.end_headers()
+                self.wfile.write(img_path.read_bytes())
+            else:
+                self.send_response(404)
+                self.end_headers()
+            return
+
+        if self.path.startswith("/api/pulse-series"):
+            self.send_response(200)
+            self.send_header("Content-Type", "application/json; charset=utf-8")
+            self.send_header("Cache-Control", "no-store")
+            self.end_headers()
+            series_path = ROOT / "data" / "processed" / "pulse_series.jsonl"
+            entries = []
+            if series_path.exists():
+                with series_path.open("r", encoding="utf-8") as f:
+                    for line in f:
+                        try:
+                            entries.append(json.loads(line))
+                        except:
+                            pass
+            entries = sorted(entries, key=lambda x: x["height"])[-100:]
+            self.wfile.write(json.dumps(entries).encode())
+            return
+
+        if self.path.startswith("/api/live-pulse"):
+            self.send_response(200)
+            self.send_header("Content-Type", "application/json; charset=utf-8")
+            self.send_header("Cache-Control", "no-store")
+            self.end_headers()
+            flow_path = ROOT / "data" / "processed" / "live_pulse.json"
+            if flow_path.exists():
+                self.wfile.write(flow_path.read_bytes())
+            else:
+                self.wfile.write(b'{"error":"not generated"}')
+            return
+
         if self.path.startswith("/api/network-context"):
             self.send_response(200)
             self.send_header("Content-Type", "application/json; charset=utf-8")
