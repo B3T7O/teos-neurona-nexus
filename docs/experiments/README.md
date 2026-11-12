@@ -359,3 +359,35 @@
   - Detector de deriva (Capa 1) indica KS=0.0753 (ATENCION: ligera desviacion).
   - La dificultad va a bajar -7.66% en 1.3 dias.
 - **Conclusion**: ✅ El sistema es un centro de comando criptografico completo y visual.
+
+
+## EXP-023 — Prueba de Resiliencia: Corte de Internet
+- **Fecha**: 2026-11-12
+- **Hipotesis**: El sistema Critical Guardian (Caja Negra) es capaz de proteger la
+  integridad de los datos y seguir operando localmente durante una interrupcion
+  del servicio de internet.
+- **Metodo**: Se experimento un corte de red real. Se verifico la creacion de
+  backups rotativos (maximo 5) y se ejecuto el diagnostico de integridad
+  (tools/critical_guardian.py restore) al restablecerse la conexion.
+- **Resultado**:
+  - Se generaron 5 backups en intervalos exactos (13:32, 13:37, 13:43, 13:48, 13:54).
+  - La rotacion funciono correctamente (se mantienen solo los 5 mas recientes).
+  - Diagnostico final: ✅ Todos los archivos criticos estan sanos.
+- **Conclusion**: ✅ El sistema es resiliente a fallos de red. La Caja Negra
+  garantiza la continuidad e integridad de los datos criticos (89k+ predicciones)
+  incluso en escenarios de desconexion.
+
+
+## EXP-024 — Overclock Seguro y Optimización de Hardware
+- **Fecha**: 2026-11-12
+- **Hipotesis**: Aprovechar el margen termico (60C) y la proxima caida de dificultad (-7.66%)
+  para aumentar el hashrate sin comprometer la integridad del ASIC.
+- **Metodo**: Cambio de frecuencia de 525 MHz a 550 MHz via API AxeOS,
+  manteniendo el voltaje en 1100 mV (Undervolting activo).
+- **Resultado**:
+  - Hashrate: 1069 GH/s -> 1114 GH/s (+4.2%).
+  - Temperatura: 60.00 C -> 60.12 C (Sin cambios significativos).
+  - Estabilidad: 100% (0 shares rechazados por hardware).
+- **Conclusion**: ✅ El overclock seguro es exitoso. El chip tiene un margen
+  termico excelente gracias al undervolting previo. TEOS esta listo para
+  capturar mas shares durante la ventana de dificultad baja.
