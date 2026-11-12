@@ -296,3 +296,21 @@
   - El scheduler registrara `critical_backup: ok` en el historial.
 - **Conclusion**: ✅ El sistema ahora es resiliente a cortes de luz. En el peor
   de los casos, se pierden maximo 5 minutos de datos, no toda la base historica.
+
+
+## EXP-019 — Block Explorer (Nonce, Merkle y ECDSA en vivo)
+- **Fecha**: 2026-11-11
+- **Hipotesis**: integrar un explorador de bloques de Bitcoin en el scheduler
+  para extraer datos criptograficos en tiempo real y verificar la autenticidad de la red.
+- **Implementacion**: 
+  - `tools/block_explorer.py`: descarga el ultimo bloque, extrae Nonce, Merkle Root,
+    cuenta transacciones y verifica una firma ECDSA (soporta Legacy y SegWit).
+  - Integrado en `core/scheduler.py` (cada 5 min).
+  - Guarda los datos en `data/processed/block_explorer.json`.
+- **Resultado**: 
+  - Bloque verificado: #975,504.
+  - Nonce: 402,790,069.
+  - Merkle Root: cb34b5ad... 
+  - Firma ECDSA: ✅ VALIDA.
+- **Conclusion**: ✅ TEOS ahora no solo predice el hashrate de tu Bitaxe, sino que
+  audita la red Bitcoin en tiempo real. El sistema es un nodo de observacion criptografica.
