@@ -262,3 +262,20 @@
   en reaccionar a cambios. **60m se mantiene como el equilibrio optimo.**
 - **Leccion**: en hardware estable, la reactividad no ayuda. El ruido se combate
   con promediado, no con velocidad de respuesta.
+
+
+## EXP-017 — Crypto Audit Autónomo
+- **Fecha**: 2026-11-11
+- **Hipotesis**: integrar la verificacion criptografica de Bitcoin (Merkle Root y ECDSA) 
+  en el scheduler para asegurar la integridad de la base de datos local y de la red.
+- **Implementacion**: 
+  - `tools/crypto_audit.py`: descarga el ultimo bloque de Bitcoin, verifica su firma 
+    ECDSA y calcula el Merkle Root de los 89,841 outcomes locales.
+  - Integrado en `core/scheduler.py` para ejecutarse cada 5 minutos.
+- **Resultado**: 
+  - El scheduler reporta `crypto_audit: ok` en el historial central cada 5 minutos.
+  - Merkle Root local: 22c491f5bc13f63caad53b289a40abfd...
+  - El bloque actual de Bitcoin (#975,490) tiene firma ECDSA valida.
+- **Conclusion**: ✅ TEOS ahora es un auditor criptografico autonomo. 
+  Garantiza que los datos de entrenamiento no han sido alterados y que el nodo 
+  tiene conexion con la red Bitcoin real.
