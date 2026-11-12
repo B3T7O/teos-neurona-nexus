@@ -11,6 +11,7 @@ import traceback
 from datetime import datetime
 from core.analyzer import analyze
 from tools.crypto_audit import main as run_crypto_audit
+from tools.critical_guardian import make_backup as run_critical_backup
 from core.evolution_history import record as _evo_record
 from core.prospective_eval import main as evaluate_prospective
 from core.learning_loop_v2 import main as run_learning_loop_v2
@@ -59,6 +60,12 @@ def main():
             except Exception:
                 print("Error en la comprobación Bitaxe (sin aplicar cambios):")
                 traceback.print_exc()
+
+            try:
+                run_critical_backup()
+                _evo_record("critical_backup", "ok", "backup de datos guardado")
+            except Exception as e:
+                _evo_record("critical_backup", "failed", f"error en backup: {e}")
 
             try:
                 run_crypto_audit()

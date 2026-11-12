@@ -279,3 +279,20 @@
 - **Conclusion**: ✅ TEOS ahora es un auditor criptografico autonomo. 
   Garantiza que los datos de entrenamiento no han sido alterados y que el nodo 
   tiene conexion con la red Bitcoin real.
+
+
+## EXP-018 — Blindaje de Datos contra Apagones (Critical Guardian)
+- **Fecha**: 2026-11-11
+- **Hipotesis**: proteger los datos críticos de entrenamiento (89k+ outcomes) contra
+  corrupcion por cortes de energia electrica repentinos.
+- **Implementacion**: 
+  - `tools/critical_guardian.py`: crea un backup rotativo (max 5) cada vez que se ejecuta.
+  - Valida la integridad de archivos JSON (objetos) y JSONL (lineas).
+  - Restaura automaticamente el backup mas reciente si detecta corrupcion.
+  - Integrado en `core/scheduler.py` (backup cada 5 min).
+  - Integrado en `~/.bashrc` (restauracion automatica al encender la PC).
+- **Resultado**: 
+  - Primer backup manual: `backup_20261111_191245`.
+  - El scheduler registrara `critical_backup: ok` en el historial.
+- **Conclusion**: ✅ El sistema ahora es resiliente a cortes de luz. En el peor
+  de los casos, se pierden maximo 5 minutos de datos, no toda la base historica.
