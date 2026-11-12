@@ -12,6 +12,7 @@ from datetime import datetime
 from core.analyzer import analyze
 from tools.crypto_audit import main as run_crypto_audit
 from tools.block_explorer import main as run_block_explorer
+from tools.network_context import main as run_network_context
 from tools.critical_guardian import make_backup as run_critical_backup
 from core.evolution_history import record as _evo_record
 from core.prospective_eval import main as evaluate_prospective
@@ -61,6 +62,12 @@ def main():
             except Exception:
                 print("Error en la comprobación Bitaxe (sin aplicar cambios):")
                 traceback.print_exc()
+
+            try:
+                run_network_context()
+                _evo_record("network_context", "ok", "analisis de red actualizado")
+            except Exception as e:
+                _evo_record("network_context", "failed", f"error en network_context: {e}")
 
             try:
                 run_block_explorer()

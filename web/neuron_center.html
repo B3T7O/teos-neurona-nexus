@@ -106,6 +106,21 @@
     </div>
   </div>
 
+
+  <div class="card full" id="networkContextCard" style="display:none;">
+    <h2>Network Context (Estado de Bitcoin)</h2>
+    <div class="pred-grid" style="grid-template-columns: repeat(4, 1fr);">
+      <div class="pred-item"><div class="label">CAMBIO DIFICULTAD</div><div class="value ok" id="ncDiff">—</div></div>
+      <div class="pred-item"><div class="label">AJUSTE EN</div><div class="value hl" id="ncEta">—</div></div>
+      <div class="pred-item"><div class="label">CONGESTION</div><div class="value" id="ncCongestion">—</div></div>
+      <div class="pred-item"><div class="label">COMISION RAPIDA</div><div class="value" id="ncFee">—</div></div>
+    </div>
+    <div style="margin-top:10px; font-size:11px; color:var(--dim); display:flex; justify-content:space-between;">
+      <span>Mempool: <span id="ncMempool">—</span> tx</span>
+      <span>Prom. ultimos 10 bloques: <span id="ncAvgBlock">—</span> min</span>
+    </div>
+  </div>
+
 </main>
 
 <script>
@@ -294,7 +309,41 @@ async function fetchBlockExplorer() {
   } catch (e) {}
 }
 
+
+async function fetchNetworkContext() {
+  try {
+    const r = await fetch("/api/network-context?_=" + Date.now());
+    const data = await r.json();
+    if (data.error) return;
+    
+    document.getElementById("networkContextCard").style.display = "block";
+    
+    const diff = data.difficulty || {};
+    const change = diff.estimated_change_pct || 0;
+    const diffEl = document.getElementById("ncDiff");
+    diffEl.textContent = (change >= 0 ? "+" : "") + change.toFixed(2) + "%";
+    diffEl.style.color = change >= 0 ? "var(--bad)" : "var(--ok)"; 
+    
+    document.getElementById("ncEta").textContent = (diff.remaining_days || 0).toFixed(1) + " dias";
+    
+    const mempool = data.mempool || {};
+    const congestion = mempool.congestion || "—";
+    const congEl = document.getElementById("ncCongestion");
+    congEl.textContent = congestion;
+    congEl.style.color = congestion === "ALTA" ? "var(--warn)" : (congestion === "MEDIA" ? "var(--acc)" : "var(--ok)");
+    
+    const fees = data.fees || {};
+    document.getElementById("ncFee").textContent = (fees.fastest || 0) + " sat/vB";
+    document.getElementById("ncMempool").textContent = (mempool.tx_count || 0).toLocaleString();
+    
+    const recent = data.recent_blocks || {};
+    document.getElementById("ncAvgBlock").textContent = (recent.avg_interval_min || 0).toFixed(2);
+    
+  } catch (e) {}
+}
+
 async function tick() {
+  fetchNetworkContext();
   fetchBlockExplorer();
   const data = await fetchData();
   if (!data) return;

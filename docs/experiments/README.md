@@ -328,3 +328,14 @@
 - **Resultado**: Panel mostrando Bloque #975,507 con firma ECDSA VALIDA en vivo.
 - **Conclusion**: ✅ El sistema es un centro de comando criptografico. Integra
   prediccion de hardware (IA), infraestructura (scheduler) y criptografia Bitcoin.
+
+
+## EXP-021 — Network Context (Estado de la Red Bitcoin)
+- **Fecha**: 2026-11-11
+- **Hipotesis**: mostrar el contexto operativo de la red Bitcoin (dificultad, mempool, comisiones) para entender el entorno de minado.
+- **Implementacion**: 
+  - `tools/network_context.py`: analiza proyeccion de dificultad, mempool, comisiones y tiempos de bloques.
+  - Endpoint /api/network-context en el servidor web.
+  - Tarjeta visual en neuron_center.html con colores dinamicos (verde si la dificultad baja).
+- **Resultado**: Panel mostrando -6.96% de cambio de dificultad, congestion ALTA y comisiones de 3 sat/vB.
+- **Conclusion**: ✅ El panel ahora muestra tanto el estado del hardware (Bitaxe) como el contexto de la red (Bitcoin).
