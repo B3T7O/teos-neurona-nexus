@@ -92,6 +92,20 @@
     <canvas id="chart" width="900" height="180"></canvas>
     <div class="legend" id="legend"></div>
   </div>
+
+  <div class="card full" id="btcBlockCard" style="display:none;">
+    <h2>Bitcoin Block Explorer (En Vivo)</h2>
+    <div class="pred-grid" style="grid-template-columns: repeat(4, 1fr);">
+      <div class="pred-item"><div class="label">ALTURA</div><div class="value hl" id="btcHeight">—</div></div>
+      <div class="pred-item"><div class="label">NONCE</div><div class="value" id="btcNonce">—</div></div>
+      <div class="pred-item"><div class="label">TRANSACCIONES</div><div class="value" id="btcTxCount">—</div></div>
+      <div class="pred-item"><div class="label">FIRMA ECDSA</div><div class="value ok" id="btcEcdsa">—</div></div>
+    </div>
+    <div style="margin-top:10px; font-size:10px; color:var(--dim); word-break: break-all;">
+      Merkle Root: <span id="btcMerkle">—</span>
+    </div>
+  </div>
+
 </main>
 
 <script>
@@ -263,7 +277,25 @@ function renderChart(data) {
   lg.innerHTML = names.map(n => `<span><span class="dot" style="background:${COLORS[n] || '#58a6ff'}"></span>${SHORT[n] || n}</span>`).join("");
 }
 
+
+async function fetchBlockExplorer() {
+  try {
+    const r = await fetch("/api/block-explorer?_=" + Date.now());
+    const data = await r.json();
+    if (data.error) return;
+    
+    document.getElementById("btcBlockCard").style.display = "block";
+    document.getElementById("btcHeight").textContent = data.height;
+    document.getElementById("btcNonce").textContent = data.nonce;
+    document.getElementById("btcTxCount").textContent = data.tx_count;
+    document.getElementById("btcMerkle").textContent = data.merkle_root;
+    document.getElementById("btcEcdsa").textContent = data.ecdsa_verified ? "✅ VÁLIDA" : "❌ INVÁLIDA";
+    document.getElementById("btcEcdsa").style.color = data.ecdsa_verified ? "var(--ok)" : "var(--bad)";
+  } catch (e) {}
+}
+
 async function tick() {
+  fetchBlockExplorer();
   const data = await fetchData();
   if (!data) return;
   document.getElementById("ts").textContent = "actualizado " + new Date().toLocaleTimeString();

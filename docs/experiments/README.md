@@ -314,3 +314,17 @@
   - Firma ECDSA: ✅ VALIDA.
 - **Conclusion**: ✅ TEOS ahora no solo predice el hashrate de tu Bitaxe, sino que
   audita la red Bitcoin en tiempo real. El sistema es un nodo de observacion criptografica.
+
+
+## EXP-020 — Panel visual con Block Explorer integrado
+- **Fecha**: 2026-11-11
+- **Hipotesis**: mostrar los datos criptograficos del bloque de Bitcoin en vivo
+  dentro del panel neuron_center.html.
+- **Implementacion**: 
+  - Endpoint /api/block-explorer en web/server.py.
+  - Nueva tarjeta en web/neuron_center.html con Altura, Nonce, Transacciones, 
+    Merkle Root y estado de firma ECDSA.
+  - Consumo asincrono cada 30 segundos.
+- **Resultado**: Panel mostrando Bloque #975,507 con firma ECDSA VALIDA en vivo.
+- **Conclusion**: ✅ El sistema es un centro de comando criptografico. Integra
+  prediccion de hardware (IA), infraestructura (scheduler) y criptografia Bitcoin.

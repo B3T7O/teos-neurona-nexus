@@ -780,6 +780,18 @@ class Handler(SimpleHTTPRequestHandler):
                 self.wfile.write(b'{"error":"neuron_flow.json not generated yet"}')
             return
 
+        if self.path.startswith("/api/block-explorer"):
+            self.send_response(200)
+            self.send_header("Content-Type", "application/json; charset=utf-8")
+            self.send_header("Cache-Control", "no-store")
+            self.end_headers()
+            flow_path = ROOT / "data" / "processed" / "block_explorer.json"
+            if flow_path.exists():
+                self.wfile.write(flow_path.read_bytes())
+            else:
+                self.wfile.write(b'{"error":"block_explorer.json not generated yet"}')
+            return
+
         if self.path.startswith("/api/neuron-state"):
             try:
                 from neuron_state import get_state
