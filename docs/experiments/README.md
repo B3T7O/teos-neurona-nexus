@@ -567,3 +567,78 @@
 - Caja Negra: 5 backups rotando cada 5 minutos.
 - WiFi: -42 dBm (excelente, movido junto al router).
 - Bitaxe: 1221 GH/s, 60°C, 79 shares ok / 0 fail.
+
+
+## EXP-033 — Auditoría completa post-noche épica (2026-11-13 mañana)
+- **Fecha**: 2026-11-13 (08:11 - 08:45)
+- **Hipotesis**: Verificar que todos los subsistemas de TEOS sobrevivieron
+  la noche épica (flasheo, intentos V2, cambios de pool) sin degradación.
+- **Metodo**: Auditoría en 5 frentes independientes:
+  1. Estado del Bitaxe (hardware + pool + shares).
+  2. Estado de los schedulers (Principal + Lite).
+  3. Audit Engine (salud de datos).
+  4. Caja Negra (backups e integridad).
+  5. Re-evolución de la neurona para el hardware a 600 MHz.
+
+- **Resultados por frente**:
+
+### 1. Bitaxe (hardware)
+- Firmware: v2.15.4 (flasheado por USB la noche anterior).
+- Frecuencia: 600 MHz | Voltaje: 1100 mV (overclock intacto).
+- Hashrate: 1184-1221 GH/s.
+- Temperatura: 60.25 °C ASIC / 77 °C VR.
+- Shares: 7712 ok / 8 fail (99.89% éxito).
+- Uptime continuo: 7h 38min.
+- Pool: solo.ckpool.org:3333 (Stratum V1).
+
+### 2. Schedulers distribuidos
+- **Principal** (PID 238): `active (running)`, 30.2% CPU, 21.7% RAM.
+  - Tareas: learning_loop_v2, ridge_live, meta_learner,
+    ensemble, best_of_both, prospective_eval, crypto_audit.
+- **Lite** (PID 240): `active (running)`, 0.1% CPU, 0.9% RAM.
+  - Tareas: bitaxe_control (2min), pulse_series (2min), network_context (2min).
+- Ambos con uptime de 46 min, eventos recientes cada 5/2 minutos.
+- Fix aplicado: endpoint /api/schedulers corregido (tenia un espacio
+  al final del pattern que impedia encontrar el proceso Principal).
+  Ahora lee PID directo de `systemctl show -p MainPID`.
+
+### 3. Audit Engine
+- **VEREDICTO: SANO** (10 chequeos OK, 0 advertencias, 0 fallos).
+- Limpieza aplicada:
+  - 23 samples corruptos eliminados de bitaxe_samples.marked.jsonl
+    (basura de los apagones + outliers historicos).
+  - 2,859 outcomes faltantes de ridge_live rellenados.
+- Cobertura eval (ridge_live): 100%.
+- Total outcomes: 94,671 (antes 91,801).
+
+### 4. Caja Negra (Critical Guardian)
+- 5 backups rotando cada 5 minutos:
+  - backup_20261113_081918 (41M)
+  - backup_20261113_082417 (41M)
+  - backup_20261113_083035 (42M)
+  - backup_20261113_083511 (42M)
+  - backup_20261113_084031 (42M) ← ultimo
+- Integridad: los 4 archivos criticos son JSON/JSONL validos:
+  - bitaxe_samples.marked.jsonl (30,360 lineas)
+  - learning_outcomes_v2.jsonl (94,671 lineas)
+  - evolve_champion.json (437 bytes)
+  - history.jsonl (7,090 lineas)
+- Diagnostico de restauracion (dry-run): ✅ Todos sanos.
+
+### 5. Re-evolucion de la neurona
+- Ejecutado `evolve_lab` manualmente con los 94,671 outcomes.
+- Nuevo champion adaptado al hardware a 600 MHz:
+  - APE: 2.2913% (antes 6.03% en predicciones recientes).
+  - Pesos: referencia_10m 86.61% (nueva dominante),
+    adaptativo_neurona 11.71%, resto < 1%.
+- Runner relanzado en segundo plano (PID 3480, cada 6h).
+
+### 6. Mejora del soldado (WiFi)
+- WiFi RSSI: -68 dBm → **-42 dBm** (movido fisicamente junto al router).
+- Estado: Conectado.
+- Impacto: elimina micro-cortes, reduce shares stale, conexion rocosa.
+
+- **Conclusion**: ✅ Todos los subsistemas pasaron la auditoria. El sistema
+  esta en su mejor estado historico verificado: hardware optimo, neurona
+  adaptada, schedulers redundantes, audit limpio y caja negra garantizada.
+  La noche epica no dejo deuda tecnica.
