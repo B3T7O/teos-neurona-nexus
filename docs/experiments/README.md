@@ -408,3 +408,20 @@
 - **Conclusion**: ✅ El chip soporta 575 MHz manteniendo temperaturas seguras.
   El silicio tiene margen para un ultimo escalon (600 MHz) antes del limite
   termico de 68C o la aparicion de errores por falta de voltaje.
+
+
+## EXP-026 — Overclock Máximo Seguro (600 MHz)
+- **Fecha**: 2026-11-12
+- **Hipotesis**: Alcanzar el limite maximo seguro del ASIC BM1370 sin comprometer
+  la integridad termica ni la tasa de rechazo.
+- **Metodo**: Escalado de frecuencia 525 -> 550 -> 575 -> 600 MHz via API,
+  manteniendo voltaje en 1100 mV. Monitoreo continuo.
+- **Resultado**:
+  - Hashrate: 1198.29 GH/s (Casi 1.2 TH/s).
+  - Temperatura ASIC: 59.75 C (Asombrosamente estable).
+  - Temperatura VR: 77 C (Margen de 8 C antes del limite).
+  - Eficiencia: 17.87 J/TH (Mejor que de fabrica).
+  - Shares: 389 aceptados, 0 rechazados.
+- **Conclusion**: ✅ El Bitaxe Gamma 602 alcanza su punto optimo a 600 MHz.
+  El undervolting previo permite este nivel de rendimiento con temperaturas
+  de 60 C. Se detiene la escalada para priorizar la longevidad del chip.
