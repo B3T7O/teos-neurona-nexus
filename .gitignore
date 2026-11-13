@@ -51,3 +51,5 @@ data/guardian/
 data/healer/
 data/evolve/
 .env
+tools/stratum_proxy/
+tproxy-config.toml

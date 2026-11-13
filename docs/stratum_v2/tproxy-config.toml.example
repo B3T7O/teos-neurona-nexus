@@ -1,0 +1,28 @@
+# Stratum V2 Translator Proxy - Configuracion de ejemplo
+# Copia este archivo como tproxy-config.toml y rellena con TUS datos.
+# El archivo tproxy-config.toml NUNCA debe subirse a GitHub (contiene credenciales).
+#
+# Requisitos previos:
+#   1. Compilar el proxy: cd tools/stratum_proxy/sv2-apps && cargo build --release -p translator_sv2
+#   2. Obtener tu user_identity de Braiins Pool (solo el username, sin worker)
+#   3. Obtener el authority_pubkey de Braiins (token largo de la URL stratum2+tcp://)
+
+downstream_address = "0.0.0.0"
+downstream_port = 34255
+max_supported_version = 2
+min_supported_version = 2
+downstream_extranonce2_size = 4
+verify_payout = false
+aggregate_channels = true
+
+[downstream_difficulty_config]
+min_individual_miner_hashrate = 10000000000000.0
+shares_per_minute = 6.0
+enable_vardiff = true
+job_keepalive_interval_secs = 60
+
+[[upstreams]]
+address = "stratum.braiins.com"
+port = 3333
+authority_pubkey = "REEMPLAZA_CON_TU_TOKEN_DE_BRAIINS"
+user_identity = "REEMPLAZA_CON_TU_USERNAME"

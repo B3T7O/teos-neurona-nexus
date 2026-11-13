@@ -448,3 +448,28 @@
   demostrando que el sistema se auto-adapta al nuevo hardware sin intervencion.
   Hallazgo valioso para el portafolio: el modelo no solo predice, sino que
   **re-aprende cuando el hardware cambia**.
+
+
+## EXP-028 — Compilacion e intento de integracion de Stratum V2 (Translator Proxy)
+- **Fecha**: 2026-11-12
+- **Hipotesis**: Compilar y ejecutar el translator proxy de Stratum V2
+  para conectar el Bitaxe (V1) a Braiins Pool (V2).
+- **Metodo**: 
+  1. Clonar repositorio oficial stratum-mining/sv2-apps.
+  2. Compilar con cargo (Rust 1.97.1) durante 28 minutos.
+  3. Configurar tproxy-config.toml con la estructura correcta.
+  4. Ejecutar contra stratum.braiins.com:3333.
+- **Hallazgos tecnicos**:
+  - El campo user_identity va DENTRO de [[upstreams]], no en la raiz.
+    (Confirmado leyendo el codigo fuente miner-apps/translator/src/lib/config.rs).
+  - El proxy SI conecta a Braiins con Stratum V2 (SetupConnectionSuccess, used_version: 2).
+  - El downstream SV1 server arranca en 0.0.0.0:34255 correctamente.
+  - Vardiff y job_keepalive loops funcionan.
+- **Problema pendiente**: Braiins cerro la conexion (SocketClosed) a los 16s
+  porque user_identity = "B3T7O.nombreEquipo" no es valido. Debe ser SOLO el
+  username ("B3T7O") y el worker se agrega automaticamente. Pendiente de testear
+  con el username correcto.
+- **Conclusion**: La compilacion y el arranque del proxy son exitosos. La conexion
+  SV2 con el pool tambien (handshake completado). Solo queda validar el
+  user_identity correcto con Braiins antes de apuntar el Bitaxe al proxy.
+  El Bitaxe permanece en CKPool (V1) por seguridad hasta validar.
