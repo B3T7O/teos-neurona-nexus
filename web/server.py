@@ -812,6 +812,18 @@ class Handler(SimpleHTTPRequestHandler):
             self.wfile.write(json.dumps(entries).encode())
             return
 
+        if self.path.startswith("/api/axeos-logs"):
+            self.send_response(200)
+            self.send_header("Content-Type", "application/json; charset=utf-8")
+            self.send_header("Cache-Control", "no-store")
+            self.end_headers()
+            log_path = ROOT / "data" / "processed" / "axeos_logs.json"
+            if log_path.exists():
+                self.wfile.write(log_path.read_bytes())
+            else:
+                self.wfile.write(b'[]')
+            return
+
         if self.path.startswith("/api/schedulers"):
             self.send_response(200)
             self.send_header("Content-Type", "application/json; charset=utf-8")
@@ -820,23 +832,24 @@ class Handler(SimpleHTTPRequestHandler):
             import subprocess
             import json as _json
             from datetime import datetime, timezone
-            data = {"main": {}, "lite": {}, "timestamp": datetime.now(timezone.utc).isoformat()}
+            data = {"main": {}, "lite": {}, "mlp": {}, "timestamp": datetime.now(timezone.utc).isoformat()}
             for name, service in [("main", "teos-neurona-scheduler.service"), ("lite", "teos-neurona-scheduler-lite.service")]:
                 try:
                     status = subprocess.run(["systemctl", "is-active", service], capture_output=True, text=True, timeout=3).stdout.strip()
                     data[name]["active"] = (status == "active")
                     data[name]["status"] = status
-                    # Obtener PID y recursos
+                    # Obtener PID y recursos (match exacto del ultimo token)
                     ps = subprocess.run(["ps", "-eo", "pid,pcpu,pmem,args"], capture_output=True, text=True, timeout=3).stdout
-                    process_pattern = "core.scheduler_lite" if name == "lite" else "core.scheduler "
+                    target_module = "core.scheduler_lite" if name == "lite" else "core.scheduler"
                     for line in ps.split("\n"):
-                        if process_pattern in line and "grep" not in line:
-                            parts = line.split()
-                            if len(parts) >= 4:
-                                data[name]["pid"] = parts[0]
-                                data[name]["cpu"] = parts[1]
-                                data[name]["mem"] = parts[2]
-                                break
+                        if "grep" in line:
+                            continue
+                        parts = line.split()
+                        if len(parts) >= 4 and parts[-1] == target_module:
+                            data[name]["pid"] = parts[0]
+                            data[name]["cpu"] = parts[1]
+                            data[name]["mem"] = parts[2]
+                            break
                     # Ultima ejecucion del lite
                     if name == "lite":
                         hist_path = ROOT / "data" / "evolve" / "history.jsonl"
@@ -852,6 +865,30 @@ class Handler(SimpleHTTPRequestHandler):
                             data[name]["last_run"] = last_ts
                 except Exception as e:
                     data[name]["error"] = str(e)
+            # --- DATOS MLP LITE ---
+            try:
+                timer_status = subprocess.run(["systemctl", "is-active", "teos-neurona-mlp-lite.timer"], capture_output=True, text=True, timeout=3).stdout.strip()
+                data["mlp"]["active"] = (timer_status == "active")
+                data["mlp"]["status"] = timer_status
+                data["mlp"]["pid"] = "Timer"
+                data["mlp"]["cpu"] = "~1s"
+                data["mlp"]["mem"] = "<50M"
+                
+                pred_path = ROOT / "data" / "processed" / "learning_predictions_v2.jsonl"
+                last_ts = None
+                if pred_path.exists():
+                    with pred_path.open("r", encoding="utf-8", errors="ignore") as f:
+                        for l in reversed(f.readlines()):
+                            try:
+                                p = _json.loads(l)
+                                if p.get("method") == "mlp_lite":
+                                    last_ts = p.get("timestamp")
+                                    break
+                            except: pass
+                data["mlp"]["last_run"] = last_ts
+            except Exception as e:
+                data["mlp"]["error"] = str(e)
+            # ----------------------
             self.wfile.write(_json.dumps(data).encode())
             return
 

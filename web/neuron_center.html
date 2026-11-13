@@ -173,7 +173,7 @@
     <h2>🔬 TEOS Crypto Lab (Análisis Criptográfico)</h2>
     
     <!-- Fila 1: Avalancha y Nonces lado a lado -->
-    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:16px; margin-top:15px;">
+    <div style="display:grid; grid-template-columns: 1fr 1fr 1fr; gap:16px; margin-top:15px;">
       <div style="background:#161b22; padding:10px; border-radius:6px;">
         <h3 style="font-size:12px; color:#8b949e; margin-bottom:10px;">Efecto Avalancha (SHA256)</h3>
         <img src="/api/lab-image/avalanche_effect.png" style="width:100%; border-radius:4px; display:block;" onerror="this.parentElement.style.display='none'">
@@ -204,7 +204,7 @@
 
   <div class="card full" id="schedulersCard" style="display:none;">
     <h2>Schedulers Distribuidos (Doble Redundancia)</h2>
-    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:16px; margin-top:15px;">
+    <div style="display:grid; grid-template-columns: 1fr 1fr 1fr; gap:16px; margin-top:15px;">
       <div style="background:#161b22; padding:14px; border-radius:6px; border-left:4px solid #58a6ff;">
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
           <span style="font-size:11px; color:#8b949e; letter-spacing:1px;">SCHEDULER PRINCIPAL</span>
@@ -242,6 +242,25 @@
         </ul>
         <div style="font-size:10px; color:#8b949e; margin-top:10px;">Última ejecución: <span id="liteSchedulerLastRun">—</span></div>
       </div>
+                    <div style="background:#161b22; padding:14px; border-radius:6px; border-left:4px solid #bc8cff;">
+                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+                            <span style="font-size:11px; color:#8b949e; letter-spacing:1px;">MLP LITE (IA)</span>
+                            <span id="mlpSchedulerStatus" style="font-size:10px; padding:2px 8px; border-radius:10px;">—</span>
+                        </div>
+                        <div style="font-size:10px; color:#8b949e; margin-bottom:10px;">Cada 5 min · Red Neuronal</div>
+                        <div style="display:grid; grid-template-columns: 1fr 1fr 1fr; gap:8px; margin-bottom:12px;">
+                            <div><div style="font-size:9px; color:#8b949e;">PID</div><div id="mlpSchedulerPid" style="font-size:13px;">—</div></div>
+                            <div><div style="font-size:9px; color:#8b949e;">CPU</div><div id="mlpSchedulerCpu" style="font-size:13px;">—</div></div>
+                            <div><div style="font-size:9px; color:#8b949e;">RAM</div><div id="mlpSchedulerMem" style="font-size:13px;">—</div></div>
+                        </div>
+                        <div style="font-size:10px; color:#8b949e;">Tareas asignadas:</div>
+                        <ul style="font-size:10px; color:#c9d1d9; margin:6px 0 0 15px; padding:0; line-height:1.6;">
+                            <li>neurona_mlp_lite.py</li>
+                            <li>Predicción no-lineal</li>
+                        </ul>
+                        <div style="font-size:10px; color:#8b949e; margin-top:10px;">Última ejecución: <span id="mlpSchedulerLastRun">—</span></div>
+                    </div>
+
     </div>
   </div>
 
@@ -793,7 +812,37 @@ if (document.readyState === "loading") {
 
 setInterval(fetchAxeosLogs, 2000);
 </script>
+
+    <script>
+    setInterval(async () => {
+        try {
+            const res = await fetch('/api/schedulers');
+            const data = await res.json();
+            if (data.mlp) {
+                const statusEl = document.getElementById('mlpSchedulerStatus');
+                if(statusEl){
+                    statusEl.textContent = data.mlp.active ? 'ACTIVE' : 'OFF';
+                    statusEl.style.background = data.mlp.active ? '#3fb950' : '#f85149';
+                    statusEl.style.color = '#0a0e14';
+                    statusEl.style.fontWeight = 'bold';
+                }
+                if(document.getElementById('mlpSchedulerPid')) document.getElementById('mlpSchedulerPid').textContent = data.mlp.pid || '—';
+                if(document.getElementById('mlpSchedulerCpu')) document.getElementById('mlpSchedulerCpu').textContent = data.mlp.cpu || '—';
+                if(document.getElementById('mlpSchedulerMem')) document.getElementById('mlpSchedulerMem').textContent = data.mlp.mem || '—';
+                
+                const lastRunEl = document.getElementById('mlpSchedulerLastRun');
+                if(lastRunEl && data.mlp.last_run) {
+                    const d = new Date(data.mlp.last_run);
+                    lastRunEl.textContent = d.toLocaleTimeString();
+                } else if (lastRunEl) {
+                    lastRunEl.textContent = 'Pendiente...';
+                }
+            }
+        } catch(e) { console.error('Error update MLP:', e); }
+    }, 5000);
+    </script>
 </body>
+
 </html>
 
 
