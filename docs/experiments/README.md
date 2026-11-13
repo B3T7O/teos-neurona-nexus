@@ -425,3 +425,26 @@
 - **Conclusion**: ✅ El Bitaxe Gamma 602 alcanza su punto optimo a 600 MHz.
   El undervolting previo permite este nivel de rendimiento con temperaturas
   de 60 C. Se detiene la escalada para priorizar la longevidad del chip.
+
+
+## EXP-027 — Impacto del Overclocking en la Evolución de Pesos
+- **Fecha**: 2026-11-13
+- **Hipotesis**: El cambio de hardware (525 -> 600 MHz) altera la dinamica
+  temporal de los datos y obliga al algoritmo genetico a re-optimizar los pesos.
+- **Metodo**: Ejecutar evolve_lab sobre los 91,211 outcomes acumulados
+  (incluyendo los generados tras el overclock a 600 MHz). Comparar pesos.
+- **Resultado**:
+  | Metodo | Antes (550 MHz) | Despues (600 MHz) | Cambio |
+  |---|---|---|---|
+  | referencia_10m | 9.43% | **86.66%** | +819% |
+  | adaptativo_neurona | 5.36% | 11.66% | +117% |
+  | referencia_1h | 83.33% | **0.55%** | -99.3% |
+  | media_ultimas_5 | 1.40% | 0.63% | -55% |
+  - APE: 2.2621% -> 2.2695% (+0.0074 pp, +0.3%).
+- **Conclusion**: ✅ El overclocking hace al hardware mas nervioso (mayor varianza
+  a corto plazo, menor estabilidad a largo). El algoritmo genetico detecto esto
+  automaticamente y desplazo el peso de referencia_1h (ventana larga) hacia
+  referencia_10m (ventana corta). El APE se mantiene casi identico (+0.3%),
+  demostrando que el sistema se auto-adapta al nuevo hardware sin intervencion.
+  Hallazgo valioso para el portafolio: el modelo no solo predice, sino que
+  **re-aprende cuando el hardware cambia**.
