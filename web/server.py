@@ -812,6 +812,49 @@ class Handler(SimpleHTTPRequestHandler):
             self.wfile.write(json.dumps(entries).encode())
             return
 
+        if self.path.startswith("/api/schedulers"):
+            self.send_response(200)
+            self.send_header("Content-Type", "application/json; charset=utf-8")
+            self.send_header("Cache-Control", "no-store")
+            self.end_headers()
+            import subprocess
+            import json as _json
+            from datetime import datetime, timezone
+            data = {"main": {}, "lite": {}, "timestamp": datetime.now(timezone.utc).isoformat()}
+            for name, service in [("main", "teos-neurona-scheduler.service"), ("lite", "teos-neurona-scheduler-lite.service")]:
+                try:
+                    status = subprocess.run(["systemctl", "is-active", service], capture_output=True, text=True, timeout=3).stdout.strip()
+                    data[name]["active"] = (status == "active")
+                    data[name]["status"] = status
+                    # Obtener PID y recursos
+                    ps = subprocess.run(["ps", "-eo", "pid,pcpu,pmem,args"], capture_output=True, text=True, timeout=3).stdout
+                    process_pattern = "core.scheduler_lite" if name == "lite" else "core.scheduler "
+                    for line in ps.split("\n"):
+                        if process_pattern in line and "grep" not in line:
+                            parts = line.split()
+                            if len(parts) >= 4:
+                                data[name]["pid"] = parts[0]
+                                data[name]["cpu"] = parts[1]
+                                data[name]["mem"] = parts[2]
+                                break
+                    # Ultima ejecucion del lite
+                    if name == "lite":
+                        hist_path = ROOT / "data" / "evolve" / "history.jsonl"
+                        if hist_path.exists():
+                            last_ts = None
+                            with hist_path.open("r", encoding="utf-8", errors="ignore") as hf:
+                                for line in hf:
+                                    try:
+                                        h = _json.loads(line)
+                                        if h.get("detail") == "lite scheduler":
+                                            last_ts = h.get("ts")
+                                    except: pass
+                            data[name]["last_run"] = last_ts
+                except Exception as e:
+                    data[name]["error"] = str(e)
+            self.wfile.write(_json.dumps(data).encode())
+            return
+
         if self.path.startswith("/api/live-pulse"):
             self.send_response(200)
             self.send_header("Content-Type", "application/json; charset=utf-8")

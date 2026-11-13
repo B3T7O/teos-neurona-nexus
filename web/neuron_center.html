@@ -205,6 +205,50 @@
     </div>
   </div>
 
+
+  <div class="card full" id="schedulersCard" style="display:none;">
+    <h2>Schedulers Distribuidos (Doble Redundancia)</h2>
+    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:16px; margin-top:15px;">
+      <div style="background:#161b22; padding:14px; border-radius:6px; border-left:4px solid #58a6ff;">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+          <span style="font-size:11px; color:#8b949e; letter-spacing:1px;">SCHEDULER PRINCIPAL</span>
+          <span id="mainSchedulerStatus" style="font-size:10px; padding:2px 8px; border-radius:10px;">—</span>
+        </div>
+        <div style="font-size:10px; color:#8b949e; margin-bottom:10px;">Cada 5 min · Aprendizaje pesado</div>
+        <div style="display:grid; grid-template-columns: 1fr 1fr 1fr; gap:8px; margin-bottom:12px;">
+          <div><div style="font-size:9px; color:#8b949e;">PID</div><div id="mainSchedulerPid" style="font-size:13px;">—</div></div>
+          <div><div style="font-size:9px; color:#8b949e;">CPU</div><div id="mainSchedulerCpu" style="font-size:13px;">—</div></div>
+          <div><div style="font-size:9px; color:#8b949e;">RAM</div><div id="mainSchedulerMem" style="font-size:13px;">—</div></div>
+        </div>
+        <div style="font-size:10px; color:#8b949e;">Tareas asignadas:</div>
+        <ul style="font-size:10px; color:#c9d1d9; margin:6px 0 0 15px; padding:0; line-height:1.6;">
+          <li>learning_loop_v2 · ridge_live</li>
+          <li>meta_learner · ensemble · best_of_both</li>
+          <li>prospective_eval · crypto_audit</li>
+        </ul>
+      </div>
+      <div style="background:#161b22; padding:14px; border-radius:6px; border-left:4px solid #3fb950;">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+          <span style="font-size:11px; color:#8b949e; letter-spacing:1px;">SCHEDULER LITE</span>
+          <span id="liteSchedulerStatus" style="font-size:10px; padding:2px 8px; border-radius:10px;">—</span>
+        </div>
+        <div style="font-size:10px; color:#8b949e; margin-bottom:10px;">Cada 2 min · Monitoreo rápido</div>
+        <div style="display:grid; grid-template-columns: 1fr 1fr 1fr; gap:8px; margin-bottom:12px;">
+          <div><div style="font-size:9px; color:#8b949e;">PID</div><div id="liteSchedulerPid" style="font-size:13px;">—</div></div>
+          <div><div style="font-size:9px; color:#8b949e;">CPU</div><div id="liteSchedulerCpu" style="font-size:13px;">—</div></div>
+          <div><div style="font-size:9px; color:#8b949e;">RAM</div><div id="liteSchedulerMem" style="font-size:13px;">—</div></div>
+        </div>
+        <div style="font-size:10px; color:#8b949e;">Tareas asignadas:</div>
+        <ul style="font-size:10px; color:#c9d1d9; margin:6px 0 0 15px; padding:0; line-height:1.6;">
+          <li>bitaxe_control (cada 2 min)</li>
+          <li>pulse_series (cada 2 min)</li>
+          <li>network_context (cada 2 min)</li>
+        </ul>
+        <div style="font-size:10px; color:#8b949e; margin-top:10px;">Última ejecución: <span id="liteSchedulerLastRun">—</span></div>
+      </div>
+    </div>
+  </div>
+
 </main>
 
 <script>
@@ -464,7 +508,57 @@ async function fetchLivePulse() {
   } catch (e) { console.error("Error live pulse:", e); }
 }
 
+
+async function fetchSchedulers() {
+  try {
+    const r = await fetch("/api/schedulers?_=" + Date.now());
+    if (!r.ok) return;
+    const data = await r.json();
+    if (!data.main && !data.lite) return;
+    
+    document.getElementById("schedulersCard").style.display = "block";
+    
+    function paint(prefix, info) {
+      const statusEl = document.getElementById(prefix + "SchedulerStatus");
+      const pidEl = document.getElementById(prefix + "SchedulerPid");
+      const cpuEl = document.getElementById(prefix + "SchedulerCpu");
+      const memEl = document.getElementById(prefix + "SchedulerMem");
+      
+      if (info.active) {
+        statusEl.textContent = "● ACTIVE";
+        statusEl.style.background = "#0d2818";
+        statusEl.style.color = "#3fb950";
+        statusEl.style.border = "1px solid #3fb950";
+      } else {
+        statusEl.textContent = "● " + (info.status || "DOWN").toUpperCase();
+        statusEl.style.background = "#2d0d0d";
+        statusEl.style.color = "#f85149";
+        statusEl.style.border = "1px solid #f85149";
+      }
+      if (pidEl) pidEl.textContent = info.pid || "—";
+      if (cpuEl) cpuEl.textContent = info.cpu ? info.cpu + "%" : "—";
+      if (memEl) memEl.textContent = info.mem ? info.mem + "%" : "—";
+    }
+    
+    paint("main", data.main || {});
+    paint("lite", data.lite || {});
+    
+    if (data.lite && data.lite.last_run) {
+      const ts = new Date(data.lite.last_run);
+      const diff = Math.floor((Date.now() - ts.getTime()) / 1000);
+      const abs = Math.abs(diff);
+      let label;
+      if (abs < 60) label = abs + "s atrás";
+      else if (abs < 3600) label = Math.floor(abs / 60) + "min atrás";
+      else label = Math.floor(abs / 3600) + "h atrás";
+      if (diff < 0) label = label + " (reloj desfasado)";
+      document.getElementById("liteSchedulerLastRun").textContent = label;
+    }
+  } catch(e) {}
+}
+
 async function tick() {
+  fetchSchedulers();
   fetchLivePulse();
   fetchLivePulse();
   fetchNetworkContext();
