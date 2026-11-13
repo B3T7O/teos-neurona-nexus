@@ -473,3 +473,97 @@
   SV2 con el pool tambien (handshake completado). Solo queda validar el
   user_identity correcto con Braiins antes de apuntar el Bitaxe al proxy.
   El Bitaxe permanece en CKPool (V1) por seguridad hasta validar.
+
+
+## EXP-030 — Actualización de firmware v2.13.2 → v2.15.4 (con cable USB)
+- **Fecha**: 2026-11-12 / 2026-11-13 (madrugada)
+- **Hipotesis**: Saltar de la versión v2.13.2 a v2.15.4 para habilitar
+  soporte nativo de Stratum V2 en el Bitaxe Gamma 602.
+- **Metodo**:
+  1. Intentos fallidos de OTA (interfaz web y API directa) rechazados
+     por el firmware v2.13.2 por incompatibilidad de particiones.
+  2. Conexión por cable USB-C al puerto serie COM3.
+  3. Flasheo con bitaxe.org web flasher en Chrome.
+  4. Selección: Bitaxe → Gamma → 602 → v2.15.4.
+  5. Marcado "Keep configuration" para conservar overclock y voltaje.
+- **Incidentes durante el proceso**:
+  - Primer intento: `Failed to open serial port` (pestaña AxeOS competía
+    por el puerto COM).
+  - Segundo intento: error `temp fail` (el Bitaxe entró en bucle de
+    reinicio por fallo del sensor de temperatura).
+  - Tercer intento: modo bootloader forzado (BOOT + RESET) + fuente de
+    5V conectada durante el flasheo → éxito.
+- **Resultado**:
+  - Firmware: v2.13.2 → **v2.15.4** (confirmado por API).
+  - Frecuencia preservada: **600 MHz**.
+  - Voltaje preservado: **1100 mV**.
+  - Overclock y undervolting intactos tras el flasheo.
+- **Conclusion**: ✅ Actualización exitosa con cable USB. La OTA es
+  imposible entre v2.13.2 y v2.15.4 por cambio de particiones.
+  Confirmado: el "Keep configuration" funciona y preserva todos los
+  ajustes personalizados.
+
+
+## EXP-031 — Intento de integración con Braiins Pool en Stratum V2 (fallido)
+- **Fecha**: 2026-11-13 (madrugada)
+- **Hipotesis**: Aprovechar el soporte nativo de Stratum V2 del firmware
+  v2.15.4 para conectar el Bitaxe a Braiins Pool en modo V2 cifrado.
+- **Metodo**:
+  1. Configuración en AxeOS: host stratum.braiins.com, puerto 3333,
+     protocolo Stratum V2.
+  2. User: B3T7O.bitaxe (formato usuario.worker requerido por Braiins).
+  3. SV2 Authority Pubkey: 9awtMD5KQ... (oficial de Braiins).
+  4. SV2 Channel Type: Extended Channels.
+- **Resultado**:
+  - El Bitaxe conectó a Braiins V2 (icono verde en el panel).
+  - Hashrate inicial: 1.393 TH/s reportado en Braiins.
+  - Pero el icono de "Estados de Equipo" mostraba 1 en rojo.
+  - Hashrate promedio 1h: solo 125.8 GH/s (muy por debajo de 1.2 TH/s).
+  - Shares aceptados en AxeOS: bajos y con `0 rechazado`.
+  - Aviso en AxeOS: "You don't have a share in the mining reward".
+- **Diagnostico**: Inestabilidad de Stratum V2 con Bitaxe v2.15.4 en
+  Braiins. La conexión se establece pero la mayoría de shares llegan
+  tarde o son rechazados como stale. Confirmado en múltiples intentos
+  con distintos pools (CKPool V2, Braiins V2).
+- **Conclusion**: ❌ Stratum V2 con Bitaxe v2.15.4 no es estable todavía
+  en ningún pool. Es un problema del ecosistema (firmware + pools),
+  no del hardware ni de la configuración. Se decide volver a V1.
+
+
+## EXP-032 — Retorno a CKPool Solo V1 (configuración estable definitiva)
+- **Fecha**: 2026-11-13 (madrugada)
+- **Hipotesis**: Volver a la configuración conocida como estable
+  (CKPool Solo, Stratum V1) después de los experimentos con V2.
+- **Metodo**:
+  - Pool 1 (Primary): solo.ckpool.org:3333, Stratum V1,
+    user = dirección BTC (bc1q20m7sy...), password = x.
+  - Pool 2 (Fallback): mismo host y puerto (sin otro pool para no
+    esconder errores reales).
+  - Reinicio y verificación con API.
+- **Resultado** (verificado a las 08:11 del 2026-11-13):
+  - Pool: solo.ckpool.org:3333 (SV1).
+  - Frecuencia: 600 MHz | Voltaje: 1100 mV.
+  - Hashrate: 1184-1221 GH/s estable.
+  - Shares: 7712 ok / 8 fail (99.89% éxito).
+  - Uptime continuo: 7h 38min.
+  - Temperatura: 60.25 °C ASIC / 77 °C VR.
+  - WiFi RSSI: -42 dBm (movido junto al router).
+  - Audit Engine: SANO (10 OK, 0 WARN, 0 FAIL).
+- **Conclusion**: ✅ CKPool Solo V1 es la configuración más estable
+  para el Bitaxe Gamma 602 con firmware v2.15.4. Aunque la minería en
+  solitario tiene probabilidad ínfima de encontrar bloque (~15,000
+  años con 1.2 TH/s), la conexión es rocosa y el hardware está en su
+  mejor estado. La decisión final: estabilidad sobre experimentación
+  con V2.
+
+
+## Estado del sistema tras la noche épica (2026-11-13 08:40)
+- Firmware Bitaxe: v2.15.4 (flasheado por USB).
+- Overclock: 600 MHz | Undervolting: 1100 mV.
+- Pool: CKPool Solo V1 (solo.ckpool.org:3333).
+- Neurona: APE 2.29% (94,671 outcomes, adaptada a 600 MHz).
+- Schedulers: Principal (PID 238) + Lite (PID 240) activos.
+- Audit Engine: SANO (10 OK, 0 WARN, 0 FAIL).
+- Caja Negra: 5 backups rotando cada 5 minutos.
+- WiFi: -42 dBm (excelente, movido junto al router).
+- Bitaxe: 1221 GH/s, 60°C, 79 shares ok / 0 fail.
