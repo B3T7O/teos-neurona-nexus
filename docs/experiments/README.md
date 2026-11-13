@@ -391,3 +391,20 @@
 - **Conclusion**: ✅ El overclock seguro es exitoso. El chip tiene un margen
   termico excelente gracias al undervolting previo. TEOS esta listo para
   capturar mas shares durante la ventana de dificultad baja.
+
+
+## EXP-025 — Segundo Escalón de Overclocking (575 MHz)
+- **Fecha**: 2026-11-12
+- **Hipotesis**: Aprovechar el margen termico restante (60C a 550 MHz) para
+  incrementar la frecuencia a 575 MHz y validar la estabilidad del ASIC.
+- **Metodo**: Cambio via API AxeOS. Se mantiene el voltaje en 1100 mV.
+  Monitoreo de temperatura, VR temp y tasa de rechazo de shares durante 5 min.
+- **Resultado**:
+  - Hashrate: 1113 GH/s -> 1148 GH/s (+3.1%).
+  - Temperatura ASIC: 60.12 C (Sin cambios).
+  - Temperatura VR: 77 C (Dentro del limite de 85 C).
+  - Consumo: 20.91 W.
+  - Shares: 229 aceptados, 0 rechazados (Estabilidad del 100%).
+- **Conclusion**: ✅ El chip soporta 575 MHz manteniendo temperaturas seguras.
+  El silicio tiene margen para un ultimo escalon (600 MHz) antes del limite
+  termico de 68C o la aparicion de errores por falta de voltaje.
