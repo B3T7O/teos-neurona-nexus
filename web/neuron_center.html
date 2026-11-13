@@ -245,6 +245,24 @@
     </div>
   </div>
 
+
+  <div class="card full" id="axeosLogsCard" style="display:none;">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+      <h2 style="margin:0;">ASIC Live Feed</h2>
+      <div style="display:flex; gap:8px; align-items:center;">
+        <span id="logsLiveDot" style="width:10px; height:10px; border-radius:50%; background:#3fb950; display:inline-block;"></span>
+        <span style="font-size:11px; color:#8b949e;">LIVE</span>
+      </div>
+    </div>
+    <div style="display:flex; gap:6px; margin-bottom:10px;">
+      <button class="log-filter" data-filter="all" style="padding:4px 10px; background:#58a6ff; color:#0a0e14; border:none; border-radius:3px; cursor:pointer; font-size:10px; font-weight:bold;">TODO</button>
+      <button class="log-filter" data-filter="asic_result" style="padding:4px 10px; background:#161b22; color:#c9d1d9; border:1px solid #30363d; border-radius:3px; cursor:pointer; font-size:10px;">Shares</button>
+      <button class="log-filter" data-filter="stratum_api" style="padding:4px 10px; background:#161b22; color:#c9d1d9; border:1px solid #30363d; border-radius:3px; cursor:pointer; font-size:10px;">Pool</button>
+      <button class="log-filter" data-filter="fan_controller" style="padding:4px 10px; background:#161b22; color:#c9d1d9; border:1px solid #30363d; border-radius:3px; cursor:pointer; font-size:10px;">Térmico</button>
+    </div>
+    <div id="logsTerminal" style="background:#000; border:1px solid #30363d; border-radius:4px; padding:10px; height:280px; overflow-y:auto; font-family:'SF Mono',Menlo,monospace; font-size:11px; line-height:1.5;"></div>
+  </div>
+
 </main>
 
 <script>
@@ -553,7 +571,66 @@ async function fetchSchedulers() {
   } catch(e) {}
 }
 
+
+// ========== ASIC LIVE FEED ==========
+let currentLogFilter = "all";
+
+function setupLogFilters() {
+  document.querySelectorAll(".log-filter").forEach(btn => {
+    btn.addEventListener("click", () => {
+      currentLogFilter = btn.dataset.filter;
+      document.querySelectorAll(".log-filter").forEach(b => {
+        b.style.background = "#161b22";
+        b.style.color = "#c9d1d9";
+        b.style.border = "1px solid #30363d";
+      });
+      btn.style.background = "#58a6ff";
+      btn.style.color = "#0a0e14";
+      btn.style.border = "none";
+      fetchAxeosLogs();
+    });
+  });
+}
+
+function colorForCategory(cat) {
+  if (cat === "asic_result") return "#d29922";
+  if (cat === "stratum_api") return "#3fb950";
+  if (cat === "stratum_task") return "#58a6ff";
+  if (cat === "fan_controller") return "#bc8cff";
+  if (cat === "bm1370") return "#8b949e";
+  if (cat === "websocket") return "#79c0ff";
+  return "#c9d1d9";
+}
+
+async function fetchAxeosLogs() {
+  try {
+    const r = await fetch("/api/axeos-logs?_=" + Date.now());
+    if (!r.ok) return;
+    const data = await r.json();
+    if (!Array.isArray(data) || data.length === 0) return;
+
+    document.getElementById("axeosLogsCard").style.display = "block";
+
+    const filtered = currentLogFilter === "all"
+      ? data
+      : data.filter(d => d.category === currentLogFilter);
+
+    const terminal = document.getElementById("logsTerminal");
+    const wasScrolled = terminal.scrollTop + terminal.clientHeight >= terminal.scrollHeight - 20;
+
+    terminal.innerHTML = filtered.map(d => {
+      const color = colorForCategory(d.category);
+      const up = String(d.uptime_ms).padStart(8, " ");
+      const cat = String(d.category).padEnd(16, " ");
+      return `<div style="color:${color};"><span style="color:#30363d;">[${up}]</span> <span style="color:#8b949e;">${cat}</span>${d.message.replace(/</g,"&lt;").replace(/>/g,"&gt;")}</div>`;
+    }).join("");
+
+    if (wasScrolled) terminal.scrollTop = terminal.scrollHeight;
+  } catch(e) {}
+}
+
 async function tick() {
+  fetchAxeosLogs();
   fetchSchedulers();
   fetchLivePulse();
   fetchLivePulse();
@@ -714,6 +791,7 @@ if (document.readyState === "loading") {
   ecgInit();
 }
 
+setInterval(fetchAxeosLogs, 2000);
 </script>
 </body>
 </html>
