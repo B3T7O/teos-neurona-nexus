@@ -156,7 +156,7 @@ def main():
 
     required_info = (
         "frequency", "coreVoltage", "temp", "vrTemp",
-        "hashRate_10m", "expectedHashrate",
+        "hashRate_10m", "expectedHashrate", "errorPercentage",
     )
     required_asic = ("frequencyOptions", "voltageOptions")
 
@@ -182,6 +182,7 @@ def main():
     vr_temp = finite_number("vrTemp")
     hashrate = finite_number("hashRate_10m")
     expected = finite_number("expectedHashrate")
+    error_pct = finite_number("errorPercentage")
 
     if min(asic_temp, vr_temp, hashrate, expected) < 0:
         raise RuntimeError("AxeOS devolvió temperaturas o hashrate negativos.")
@@ -208,24 +209,35 @@ def main():
                 print(f"AVISO: modo predictivo activo pero {err}")
                 temp_predicted = None
 
-    # Política conservadora: nunca aumentar frecuencia o voltaje automáticamente.
+    # === POLÍTICA NEURONA NEXUS: CONTROL DINÁMICO (UP & DOWN) ===
     target_freq, target_voltage = freq, voltage
     reason = "Sin cambios: configuración actual dentro de los límites."
 
-    if asic_temp >= 70 or vr_temp >= 80:
+    # 1. PROTECCIONES (Bajar frecuencia si hay peligro)
+    if asic_temp >= 68 or vr_temp >= 78:
         lower = [f for f in allowed_freq if f < freq]
         if lower:
             target_freq = max(lower)
-            reason = "Reducir frecuencia por temperatura elevada."
-        else:
-            reason = "Temperatura elevada; no hay frecuencia inferior disponible."
-    elif predictive_active and temp_predicted is not None and temp_predicted >= 68.0:
+            reason = f"Reducir por temperatura crítica (ASIC {asic_temp}C / VRM {vr_temp}C)"
+    elif error_pct > 1.0:
         lower = [f for f in allowed_freq if f < freq]
         if lower:
             target_freq = max(lower)
-            reason = f"Reducir frecuencia por temp predicha {temp_predicted:.2f}C >= 68C (predictivo)"
-        else:
-            reason = f"Temp predicha {temp_predicted:.2f}C alta; no hay frecuencia inferior disponible"
+            reason = f"Reducir por alto índice de errores ({error_pct}%)"
+    elif predictive_active and temp_predicted is not None and temp_predicted >= 64.0:
+        lower = [f for f in allowed_freq if f < freq]
+        if lower:
+            target_freq = max(lower)
+            reason = f"Reducir por predicción térmica ({temp_predicted:.1f}C >= 64C)"
+            
+    # 2. OPORTUNIDAD (Subir frecuencia si todo está perfecto)
+    elif (asic_temp < 58 and vr_temp < 72 and error_pct < 0.8 and 
+          (not predictive_active or (temp_predicted is not None and temp_predicted < 62.0))):
+        higher = [f for f in allowed_freq if f > freq and f <= 615]
+        if higher:
+            target_freq = min(higher)
+            reason = f"Upscale Neurona: Temp estable ({asic_temp}C), Err bajo ({error_pct}%), Red óptima."
+            
     elif hashrate < expected * 0.90:
         reason = "Hashrate muy inferior al esperado; requiere diagnóstico, no overclock automático."
 
@@ -238,7 +250,7 @@ def main():
         "current": {
             "frequency": freq, "coreVoltage": voltage,
             "temp": asic_temp, "vrTemp": vr_temp,
-            "hashRate_10m": hashrate, "expectedHashrate": expected,
+            "hashRate_10m": hashrate, "expectedHashrate": expected, "error_pct": error_pct,
         },
         "proposed": {
             "frequency": target_freq, "coreVoltage": target_voltage,
