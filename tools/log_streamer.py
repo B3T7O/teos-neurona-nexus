@@ -24,7 +24,7 @@ MAX_LINES = 200
 
 buffer = deque(maxlen=MAX_LINES)
 # Formato real: 'I (5536640) stratum_api: message...'
-LINE_RE = re.compile(r"^([IWED])\s+\((\d+)\)\s+([\w_]+):\s*(.*)$")
+LINE_RE = re.compile(r"\((\d+)\)\s+([\w_]+):\s*(.*)$")
 # Limpieza de codigos ANSI
 ANSI_RE = re.compile(r"[\[][0-9;]*[mHJK]")
 
@@ -35,13 +35,13 @@ def clean_ansi(s):
 
 def parse_line(msg):
     msg = clean_ansi(msg)
-    m = LINE_RE.match(msg)
+    m = LINE_RE.search(msg)
     if m:
         return {
-            "uptime_ms": int(m.group(2)),
-            "category": m.group(3),
-            "message": m.group(4).strip(),
-            "level": m.group(1),
+            "uptime_ms": int(m.group(1)),
+            "category": m.group(2),
+            "message": m.group(3).strip(),
+            "level": "I",
             "ts": datetime.now(timezone.utc).isoformat(),
         }
     return {
