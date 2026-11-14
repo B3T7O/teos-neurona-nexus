@@ -1,0 +1,55 @@
+{
+  "rules": [
+    {
+      "id": "emergencia_termica",
+      "priority": 1,
+      "description": "Si el VRM o ASIC se calientan demasiado, bajar a 600 MHz inmediatamente.",
+      "conditions": {
+        "vrTemp": {
+          "gte": 78
+        },
+        "temp": {
+          "gte": 68
+        }
+      },
+      "action": {
+        "type": "set_frequency",
+        "value": 600
+      }
+    },
+    {
+      "id": "optimizacion_frio",
+      "priority": 2,
+      "description": "Si est\u00e1 muy fr\u00edo y sin errores, subir a 610 MHz para exprimir el chip.",
+      "conditions": {
+        "temp": {
+          "lte": 56
+        },
+        "vrTemp": {
+          "lte": 70
+        },
+        "errorPercentage": {
+          "lte": 0.8
+        }
+      },
+      "action": {
+        "type": "set_frequency",
+        "value": 610
+      }
+    },
+    {
+      "id": "ventilador_estres",
+      "priority": 3,
+      "description": "Si el ASIC pasa de 60\u00b0C, subir el ventilador al 70%.",
+      "conditions": {
+        "temp": {
+          "gte": 60
+        }
+      },
+      "action": {
+        "type": "set_fan",
+        "value": 70
+      }
+    }
+  ]
+}
