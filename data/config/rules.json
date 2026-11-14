@@ -38,6 +38,20 @@
       }
     },
     {
+      "id": "jarvis_proteccion_ia",
+      "priority": 2,
+      "description": "Si J.A.R.V.I.S. (MLP Lite) predice una ca\u00edda fuerte de hashrate, bajar a 580 MHz preventivamente.",
+      "conditions": {
+        "mlp_predicted_hashrate": {
+          "lte": 1150
+        }
+      },
+      "action": {
+        "type": "set_frequency",
+        "value": 580
+      }
+    },
+    {
       "id": "ventilador_estres",
       "priority": 3,
       "description": "Si el ASIC pasa de 60\u00b0C, subir el ventilador al 70%.",

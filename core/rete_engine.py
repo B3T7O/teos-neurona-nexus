@@ -12,10 +12,36 @@ LOG_FILE = BASE_DIR / "data" / "processed" / "rete_decisions.jsonl"
 BITAXE_IP = os.environ.get("BITAXE_IP", "192.168.18.45")
 BASE_URL = f"http://{BITAXE_IP}"
 
+def get_mlp_prediction():
+    import json
+    from pathlib import Path
+    pred_path = Path(__file__).resolve().parent.parent / "data/processed/learning_predictions_v2.jsonl"
+    if not pred_path.exists():
+        return None
+    try:
+        with pred_path.open("r", encoding="utf-8", errors="ignore") as f:
+            lines = f.readlines()
+            for line in reversed(lines):
+                p = json.loads(line)
+                if p.get("method") == "mlp_lite":
+                    return p.get("predicted_hashRate_GHs")
+    except Exception:
+        pass
+    return None
+
 def get_current_state():
     """Obtiene los datos actuales del Bitaxe."""
     with urllib.request.urlopen(f"{BASE_URL}/api/system/info", timeout=5) as r:
-        return json.loads(r.read())
+        state = json.loads(r.read())
+    
+    # Añadir la predicción de la IA al estado
+    mlp_pred = get_mlp_prediction()
+    if mlp_pred is not None:
+        state["mlp_predicted_hashrate"] = mlp_pred
+    else:
+        state["mlp_predicted_hashrate"] = 9999 # Valor alto para no disparar la regla si no hay predicción
+        
+    return state
 
 def evaluate_condition(state, key, op, value):
     """Evalúa una condición lógica simple."""
