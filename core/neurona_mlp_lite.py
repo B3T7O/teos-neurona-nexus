@@ -1,21 +1,71 @@
 #!/usr/bin/env python3
-# TEOS Neurona Nexus - MLP Lite (Integrado al Learning Loop)
+# TEOS Neurona Nexus - MLP Lite (Integrado con Regex y Nonces Históricos)
 import json
 import time
 import numpy as np
+import re
 from pathlib import Path
 from datetime import datetime, timezone
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 INPUT_FILE = BASE_DIR / "data/raw/bitaxe_samples.marked.jsonl"
-# AHORA ESCRIBIMOS EN LA LIBRETA GENERAL DE PREDICCIONES
+LOG_FILE = BASE_DIR / "data/processed/axeos_logs.json"
 OUTPUT_FILE = BASE_DIR / "data/processed/learning_predictions_v2.jsonl"
 
 # Arquitectura de la Red Neuronal
-INPUT_SIZE = 5
+INPUT_SIZE = 8
 HIDDEN_SIZE = 16
 OUTPUT_SIZE = 1
 LEARNING_RATE = 0.01
+
+def get_regex_features():
+    """Extrae shares y dificultad de los logs usando Regex, y calcula rareza del nonce."""
+    if not LOG_FILE.exists():
+        return 0, 0.0, 0.0
+
+    # Constantes extraídas de los 10,000 nonces reales
+    HIST_MEAN = 1967107377.0
+    HIST_STD = 1272907557.0
+
+    # Regex aplicado al campo "message" que contiene "Nonce XXXX diff YYYY"
+    pattern = re.compile(r"Nonce\s+([A-Fa-f0-9]+)\s+diff\s+([\d\.]+)")
+    share_count = 0
+    diffs = []
+    nonce_z_scores = []
+
+    try:
+        with LOG_FILE.open("r", encoding="utf-8", errors="ignore") as f:
+            content = f.read()
+            try:
+                logs = json.loads(content)
+                if not isinstance(logs, list):
+                    logs = []
+            except Exception:
+                logs = []
+
+            # Tomar los últimos 500 registros para no saturar
+            logs = logs[-500:]
+
+            for entry in logs:
+                if not isinstance(entry, dict):
+                    continue
+                if entry.get("category") != "asic_result":
+                    continue
+                message = entry.get("message", "")
+                match = pattern.search(message)
+                if match:
+                    share_count += 1
+                    diffs.append(float(match.group(2)))
+                    nonce_int = int(match.group(1), 16)
+                    z_score = (nonce_int - HIST_MEAN) / HIST_STD
+                    nonce_z_scores.append(z_score)
+    except Exception:
+        pass
+
+    avg_diff = sum(diffs) / len(diffs) if diffs else 0.0
+    avg_nonce_rarity = sum(nonce_z_scores) / len(nonce_z_scores) if nonce_z_scores else 0.0
+
+    return share_count, avg_diff, avg_nonce_rarity
 
 def load_recent_data(n=300):
     if not INPUT_FILE.exists(): return []
@@ -30,21 +80,27 @@ def load_recent_data(n=300):
     return samples[-n:] if len(samples) >= n else []
 
 def train_and_predict():
-    samples = load_recent_data(100)
+    samples = load_recent_data(300)
     if len(samples) < 20:
         return {"status": "waiting_for_data", "msg": f"Faltan datos ({len(samples)}/20)"}
 
+    share_count, avg_diff, nonce_rarity = get_regex_features()
+
     X = np.array([
         [
-            s.get("temp", 0), 
-            s.get("vrTemp", 0), 
+            s.get("temp", 0),
+            s.get("vrTemp", 0),
             s.get("hashRate", 0),
             s.get("hashRate_10m", s.get("hashRate", 0)),
-            s.get("errorPercentage", 0)
+            s.get("errorPercentage", 0),
+            share_count,
+            avg_diff,
+            nonce_rarity
         ] for s in samples
     ])
+
     Y = np.array([[s["hashRate"]] for s in samples])
-    
+
     X_mean, X_std = X.mean(axis=0), X.std(axis=0) + 1e-8
     X_norm = (X - X_mean) / X_std
     Y_mean, Y_std = Y.mean(), Y.std() + 1e-8
@@ -59,13 +115,13 @@ def train_and_predict():
         Z1 = np.dot(X_norm, W1)
         A1 = np.maximum(0, Z1)
         Z2 = np.dot(A1, W2)
-        
+
         dZ2 = Z2 - Y_norm
         dW2 = np.dot(A1.T, dZ2) / len(X_norm)
         dA1 = np.dot(dZ2, W2.T)
         dZ1 = dA1 * (Z1 > 0)
         dW1 = np.dot(X_norm.T, dZ1) / len(X_norm)
-        
+
         W2 -= LEARNING_RATE * dW2
         W1 -= LEARNING_RATE * dW1
 
@@ -75,10 +131,9 @@ def train_and_predict():
     pred_A1 = np.maximum(0, pred_Z1)
     pred_Z2 = np.dot(pred_A1, W2)
     pred_norm = pred_Z2[0][0]
-    
+
     pred_real = (pred_norm * Y_std) + Y_mean
-    
-    # Formato EXACTO que espera learning_loop_v2.py
+
     timestamp = datetime.now(timezone.utc).isoformat()
     return {
         "prediction_id": f"{timestamp}|mlp_lite",
@@ -91,7 +146,7 @@ def train_and_predict():
 if __name__ == "__main__":
     print(f"[{datetime.now().strftime('%H:%M:%S')}] Entrenando MLP Lite...")
     result = train_and_predict()
-    
+
     if "status" not in result:
         OUTPUT_FILE.parent.mkdir(parents=True, exist_ok=True)
         with OUTPUT_FILE.open("a", encoding="utf-8") as f:
