@@ -12,7 +12,7 @@ INPUT_FILE = BASE_DIR / "data/raw/bitaxe_samples.marked.jsonl"
 OUTPUT_FILE = BASE_DIR / "data/processed/learning_predictions_v2.jsonl"
 
 # Arquitectura de la Red Neuronal
-INPUT_SIZE = 3
+INPUT_SIZE = 5
 HIDDEN_SIZE = 8
 OUTPUT_SIZE = 1
 LEARNING_RATE = 0.01
@@ -34,7 +34,15 @@ def train_and_predict():
     if len(samples) < 20:
         return {"status": "waiting_for_data", "msg": f"Faltan datos ({len(samples)}/20)"}
 
-    X = np.array([[s["temp"], s["vrTemp"], s["hashRate"]] for s in samples])
+    X = np.array([
+        [
+            s.get("temp", 0), 
+            s.get("vrTemp", 0), 
+            s.get("hashRate", 0),
+            s.get("hashRate_10m", s.get("hashRate", 0)),
+            s.get("errorPercentage", 0)
+        ] for s in samples
+    ])
     Y = np.array([[s["hashRate"]] for s in samples])
     
     X_mean, X_std = X.mean(axis=0), X.std(axis=0) + 1e-8
