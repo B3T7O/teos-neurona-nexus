@@ -20,7 +20,7 @@
     {
       "id": "optimizacion_frio",
       "priority": 2,
-      "description": "Si est\u00e1 muy fr\u00edo y sin errores, subir a 610 MHz para exprimir el chip.",
+      "description": "Mantener frecuencia en 600 MHz (L\u00edmite f\u00edsico seguro del silicio a 1100mV).",
       "conditions": {
         "temp": {
           "lte": 56
@@ -34,7 +34,7 @@
       },
       "action": {
         "type": "set_frequency",
-        "value": 610
+        "value": 600
       }
     },
     {
@@ -49,6 +49,23 @@
       "action": {
         "type": "set_fan",
         "value": 70
+      }
+    },
+    {
+      "id": "undervolting_eco",
+      "priority": 3,
+      "description": "Bajar voltaje a 1080mV para reducir estr\u00e9s y mejorar eficiencia (Eco Mode).",
+      "conditions": {
+        "actualFrequency": {
+          "eq": 600
+        },
+        "temp": {
+          "lte": 58
+        }
+      },
+      "action": {
+        "type": "set_voltage",
+        "value": 1080
       }
     }
   ]
