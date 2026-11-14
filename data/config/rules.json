@@ -5,82 +5,38 @@
       "priority": 1,
       "description": "Si el VRM o ASIC se calientan demasiado, bajar a 600 MHz inmediatamente.",
       "conditions": {
-        "vrTemp": {
-          "gte": 78
-        },
-        "temp": {
-          "gte": 68
-        }
+        "vrTemp": { "gte": 78 },
+        "temp": { "gte": 68 }
       },
-      "action": {
-        "type": "set_frequency",
-        "value": 600
-      }
+      "action": { "type": "set_frequency", "value": 600 }
+    },
+    {
+      "id": "estabilizacion_error",
+      "priority": 1.5,
+      "description": "Si el error supera el 1.0%, bajar a 580 MHz para estabilizar el chip.",
+      "conditions": {
+        "errorPercentage": { "gte": 1.0 }
+      },
+      "action": { "type": "set_frequency", "value": 580 }
     },
     {
       "id": "optimizacion_frio",
       "priority": 2,
-      "description": "Mantener frecuencia en 600 MHz (L\u00edmite f\u00edsico seguro del silicio a 1100mV).",
+      "description": "Mantener 580 MHz (Punto dulce: maximiza hashrate efectivo y minimiza errores).",
       "conditions": {
-        "temp": {
-          "lte": 56
-        },
-        "vrTemp": {
-          "lte": 70
-        },
-        "errorPercentage": {
-          "lte": 0.8
-        }
+        "temp": { "lte": 56 },
+        "vrTemp": { "lte": 70 }
       },
-      "action": {
-        "type": "set_frequency",
-        "value": 600
-      }
-    },
-    {
-      "id": "jarvis_proteccion_ia",
-      "priority": 2,
-      "description": "Si J.A.R.V.I.S. (MLP Lite) predice una ca\u00edda fuerte de hashrate, bajar a 580 MHz preventivamente.",
-      "conditions": {
-        "mlp_predicted_hashrate": {
-          "lte": 1150
-        }
-      },
-      "action": {
-        "type": "set_frequency",
-        "value": 580
-      }
+      "action": { "type": "set_frequency", "value": 580 }
     },
     {
       "id": "ventilador_estres",
       "priority": 3,
-      "description": "Si el ASIC pasa de 60\u00b0C, subir el ventilador al 70%.",
+      "description": "Si el ASIC pasa de 60°C, subir el ventilador al 70%.",
       "conditions": {
-        "temp": {
-          "gte": 60
-        }
+        "temp": { "gte": 60 }
       },
-      "action": {
-        "type": "set_fan",
-        "value": 70
-      }
-    },
-    {
-      "id": "undervolting_eco",
-      "priority": 3,
-      "description": "Bajar voltaje a 1080mV para reducir estr\u00e9s y mejorar eficiencia (Eco Mode).",
-      "conditions": {
-        "actualFrequency": {
-          "eq": 600
-        },
-        "temp": {
-          "lte": 58
-        }
-      },
-      "action": {
-        "type": "set_voltage",
-        "value": 1080
-      }
+      "action": { "type": "set_fan", "value": 70 }
     }
   ]
 }
