@@ -27,6 +27,7 @@ OUTCOMES = OUT / "learning_outcomes_v2.jsonl"
 CONTEXT_RESULTS = OUT / "contextual_shadow_v1_outcomes.jsonl"
 
 METHODS = (
+    "mlp_lite",
     "ultimo_hashrate",
     "referencia_10m",
     "referencia_1h",
@@ -447,6 +448,7 @@ def main():
             if pid in prediction_ids:
                 continue
 
+            if method not in forecasts: continue
             forecast = forecasts[method]
             record = {
                 "prediction_id": pid,

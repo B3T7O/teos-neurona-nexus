@@ -73,8 +73,8 @@ def train_and_predict():
     # Formato EXACTO que espera learning_loop_v2.py
     timestamp = datetime.now(timezone.utc).isoformat()
     return {
-        "prediction_id": f"mlp_lite_{int(time.time())}",
-        "timestamp": timestamp,
+        "prediction_id": f"{timestamp}|mlp_lite",
+        "source_timestamp": timestamp,
         "method": "mlp_lite",
         "predicted_hashRate_GHs": float(pred_real),
         "current_hashRate_GHs": float(X[-1][2])
