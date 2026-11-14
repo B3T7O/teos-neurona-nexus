@@ -13,11 +13,11 @@ OUTPUT_FILE = BASE_DIR / "data/processed/learning_predictions_v2.jsonl"
 
 # Arquitectura de la Red Neuronal
 INPUT_SIZE = 5
-HIDDEN_SIZE = 8
+HIDDEN_SIZE = 16
 OUTPUT_SIZE = 1
 LEARNING_RATE = 0.01
 
-def load_recent_data(n=100):
+def load_recent_data(n=300):
     if not INPUT_FILE.exists(): return []
     samples = []
     with INPUT_FILE.open("r", encoding="utf-8") as f:
