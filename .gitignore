@@ -53,3 +53,13 @@ data/evolve/
 .env
 tools/stratum_proxy/
 tproxy-config.toml
+
+# Entornos virtuales
+.venv_taproot/
+venv/
+
+# Binarios de firmware
+*.bin
+
+# Backups
+*.bak*
