@@ -13,7 +13,7 @@ LOG_FILE = BASE_DIR / "data/processed/axeos_logs.json"
 OUTPUT_FILE = BASE_DIR / "data/processed/learning_predictions_v2.jsonl"
 
 # Arquitectura optimizada (Poda)
-INPUT_SIZE = 7    # 7 sentidos (sin Z-score de nonces)
+INPUT_SIZE = 10    # 10 sentidos (Ojo Clínico completo)
 HIDDEN_SIZE = 12  # 12 neuronas (más humilde)
 OUTPUT_SIZE = 1
 LEARNING_RATE = 0.01
@@ -67,14 +67,34 @@ def load_recent_data(n=300):
             except: pass
     return samples[-n:] if len(samples) >= n else []
 
+
+def get_live_error_rates():
+    import urllib.request
+    try:
+        with urllib.request.urlopen("http://192.168.18.45/api/system/info", timeout=5) as r:
+            d = json.loads(r.read())
+            reasons = d.get("sharesRejectedReasons", [])
+            accepted = d.get("sharesAccepted", 1)
+            if accepted == 0: accepted = 1
+            
+            stale = next((x["count"] for x in reasons if x.get("message") == "Stale"), 0)
+            duplicate = next((x["count"] for x in reasons if x.get("message") == "Duplicate"), 0)
+            above = next((x["count"] for x in reasons if x.get("message") == "Above target"), 0)
+            
+            return (stale / accepted) * 100, (duplicate / accepted) * 100, (above / accepted) * 100
+    except Exception:
+        return 0.0, 0.0, 0.0
+
 def train_and_predict():
+
     samples = load_recent_data(300)
     if len(samples) < 20:
         return {"status": "waiting_for_data", "msg": f"Faltan datos ({len(samples)}/20)"}
 
     share_count, avg_diff = get_regex_features()
+    stale_rate, dup_rate, above_rate = get_live_error_rates()
 
-    # 7 Features
+    # 10 Features
     X = np.array([
         [
             s.get("temp", 0),
@@ -83,7 +103,10 @@ def train_and_predict():
             s.get("hashRate_10m", s.get("hashRate", 0)),
             s.get("errorPercentage", 0),
             share_count,
-            avg_diff
+            avg_diff,
+            stale_rate,
+            dup_rate,
+            above_rate
         ] for s in samples
     ])
 
@@ -132,7 +155,7 @@ def train_and_predict():
     }
 
 if __name__ == "__main__":
-    print(f"[{datetime.now().strftime('%H:%M:%S')}] Entrenando MLP Lite (12 neuronas, 7 features)...")
+    print(f"[{datetime.now().strftime('%H:%M:%S')}] Entrenando MLP Lite (12 neuronas, 10 features (Ojo Clínico))...")
     result = train_and_predict()
 
     if "status" not in result:
