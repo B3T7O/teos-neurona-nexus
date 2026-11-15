@@ -13,7 +13,7 @@ BITAXE_URL = "http://192.168.18.45/api/system/info"
 MIN_FREQ = 550
 MAX_FREQ = 600
 MAX_CHANGE = 5  # ±5 MHz por ciclo
-MIN_CONFIDENCE = 3.0  # 3% de diferencia mínima para actuar
+MIN_CONFIDENCE = 1.0  # 3% de diferencia mínima para actuar
 
 def get_latest_prediction():
     if not PRED_PATH.exists(): return None
@@ -65,7 +65,7 @@ def main():
     error = state.get("errorPercentage", 0)
 
     # 1. Verificar seguridad del hardware
-    if temp > 58 or vr_temp > 72 or error > 1.0:
+    if temp > 58 or vr_temp > 72 or error > 1.5:
         print(f"🛡️ IA bloqueada por seguridad (Temp={temp}°C, VRM={vr_temp}°C, Err={error}%)")
         return
 
