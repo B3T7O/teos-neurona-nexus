@@ -31,26 +31,60 @@ def fetch_text(url):
         return r.read().decode().strip()
 
 def local_merkle_root():
-    """Calcula el Merkle Root de los prediction_id locales (integridad de datos)."""
-    print("[1] Calculando Merkle Root local de outcomes...")
+    """Calcula el Master Merkle Root combinando Outcomes, IA, Rete y Reglas."""
+    print("[1] Calculando Master Merkle Root (Auditoría Global)...")
     txids = []
-    with OUTCOMES.open("r", encoding="utf-8", errors="ignore") as f:
-        for line in f:
-            try:
-                obj = json.loads(line.strip())
-                pid = obj.get("prediction_id")
-                if pid:
-                    txids.append(sha256d(pid.encode()).hex())
-            except Exception:
-                continue
+    
+    # 1. Outcomes
+    if OUTCOMES.exists():
+        with OUTCOMES.open("r", encoding="utf-8", errors="ignore") as f:
+            for line in f:
+                try:
+                    obj = json.loads(line.strip())
+                    pid = obj.get("prediction_id")
+                    if pid: txids.append(sha256d(pid.encode()).hex())
+                except: continue
+                
+    # 2. Predicciones de la IA (MLP Lite)
+    preds_path = ROOT / "data" / "processed" / "learning_predictions_v2.jsonl"
+    if preds_path.exists():
+        with preds_path.open("r", encoding="utf-8", errors="ignore") as f:
+            for line in f:
+                try:
+                    obj = json.loads(line.strip())
+                    if obj.get("method") == "mlp_lite":
+                        pid = obj.get("prediction_id")
+                        if pid: txids.append(sha256d(pid.encode()).hex())
+                except: continue
+                
+    # 3. Decisiones del Motor Rete
+    rete_path = ROOT / "data" / "processed" / "rete_decisions.jsonl"
+    if rete_path.exists():
+        with rete_path.open("r", encoding="utf-8", errors="ignore") as f:
+            for line in f:
+                try:
+                    obj = json.loads(line.strip())
+                    t = obj.get("timestamp")
+                    r = obj.get("rule")
+                    if t and r: txids.append(sha256d(f"{t}|{r}".encode()).hex())
+                except: continue
+                
+    # 4. Hash del archivo de reglas (rules.json)
+    rules_path = ROOT / "data" / "config" / "rules.json"
+    if rules_path.exists():
+        with rules_path.open("rb") as f:
+            txids.append(sha256d(f.read()).hex())
+
     if not txids:
         return None, 0
+        
     # Arbol de Merkle
     level = [bytes.fromhex(t)[::-1] for t in txids]
     while len(level) > 1:
         if len(level) % 2 == 1:
             level.append(level[-1])
         level = [sha256d(level[i] + level[i+1]) for i in range(0, len(level), 2)]
+        
     return level[0][::-1].hex(), len(txids)
 
 def verify_bitcoin_block():
