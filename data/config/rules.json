@@ -30,23 +30,6 @@
         "type": "set_frequency",
         "value": 580
       }
-    },
-    {
-      "id": "modo_estable",
-      "priority": 3,
-      "description": "Mantener SIEMPRE el punto dulce en 580 MHz. Prioridad: Precisi\u00f3n sobre Hashrate.",
-      "conditions": {
-        "temp": {
-          "lte": 58
-        },
-        "vrTemp": {
-          "lte": 72
-        }
-      },
-      "action": {
-        "type": "set_frequency",
-        "value": 580
-      }
     }
   ]
 }

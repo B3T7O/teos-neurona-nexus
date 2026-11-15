@@ -46,7 +46,32 @@ def apply_change(new_freq, reason):
             with LOG_PATH.open("a", encoding="utf-8") as f:
                 f.write(json.dumps({"timestamp": datetime.now(timezone.utc).isoformat(), "new_freq": new_freq, "reason": reason}) + "\n")
 
+
+def get_last_change_time():
+    if not LOG_PATH.exists(): return None
+    with LOG_PATH.open("r", encoding="utf-8") as f:
+        lines = f.readlines()
+        if not lines: return None
+        try:
+            last = json.loads(lines[-1])
+            ts = last.get("timestamp")
+            if ts:
+                return datetime.fromisoformat(ts)
+        except: pass
+    return None
+
 def main():
+    # Verificar Cooldown (15 minutos)
+    last_change = get_last_change_time()
+    if last_change:
+        now = datetime.now(timezone.utc)
+        if last_change.tzinfo is None:
+            last_change = last_change.replace(tzinfo=timezone.utc)
+        elapsed = (now - last_change).total_seconds()
+        if elapsed < 900: # 15 minutos
+            print(f"⏸️ IA en cooldown. Último cambio hace {elapsed/60:.1f} min. Esperando para evitar ruido.")
+            return
+
     pred = get_latest_prediction()
     if pred is None:
         print("⏳ Sin predicciones de la IA. Esperando...")
