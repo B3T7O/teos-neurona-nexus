@@ -125,8 +125,9 @@ def verify_bitcoin_block():
         except Exception:
             continue
 
-    print("    ℹ️ N/A (Bloque moderno sin transacciones P2PKH legacy para verificar ECDSA)")
-    print("       Nota: Esto es NORMAL. Bitcoin moderno usa SegWit/Taproot. El Master Merkle Root es la auditoría principal.")
+    print("    ⚠️ No se encontró ninguna transacción P2PKH en las primeras 500 transacciones de este bloque.")
+    print("       Esto NO significa que no existan transacciones legacy; simplemente son escasas en bloques modernos.")
+    print("       El Master Merkle Root local sigue siendo la auditoría principal de integridad.")
     return None
 
 def main():
@@ -161,7 +162,7 @@ def main():
     elif ecdsa_valid is False:
         print("    Firma ECDSA: ❌ INVALIDA (fallo real en la verificación)")
     else:
-        print("    Firma ECDSA: ℹ️ N/A (sin P2PKH legacy en este bloque)")
+        print("    Firma ECDSA: ⚠️ No verificada (no se encontró P2PKH en las primeras 500 txs, pero el sistema sigue operativo)")
 
 if __name__ == "__main__":
     main()
