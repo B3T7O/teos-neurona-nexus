@@ -114,6 +114,18 @@ def compute_recommendation():
             "windows_present": combined[m]["windows_present"],
         })
 
+    
+    # --- LECTURA DEL CAMPEÓN EVOLUTIVO ---
+    evolve_champ_path = Path("data/processed/evolve_champion.json")
+    evolve_data = {}
+    if evolve_champ_path.exists():
+        try:
+            with evolve_champ_path.open("r", encoding="utf-8") as f:
+                evolve_data = json.load(f)
+        except Exception:
+            pass
+    # -------------------------------------
+
     rec = {
         "version": "TEOS MetaLearner Lite v1 (Panoramic)",
         "timestamp": datetime.now(timezone.utc).isoformat(),
@@ -124,6 +136,8 @@ def compute_recommendation():
         "ranking": ranking,
         "mode": "shadow",
         "affects_production": False,
+        "evolve_champion_ape": evolve_data.get("ape_mean"),
+        "evolve_weights": evolve_data.get("weights", {})
     }
     OUTPUT.parent.mkdir(parents=True, exist_ok=True)
     with OUTPUT.open("a", encoding="utf-8") as f:

@@ -31,6 +31,7 @@ METHODS = [
     "referencia_1h",
     "media_ultimas_5",
     "ultimo_hashrate",
+    "mlp_lite",
 ]
 
 
