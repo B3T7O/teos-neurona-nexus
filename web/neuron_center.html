@@ -204,7 +204,7 @@
 
   <div class="card full" id="schedulersCard" style="display:none;">
     <h2>Schedulers Distribuidos (Doble Redundancia)</h2>
-    <div style="display:grid; grid-template-columns: 1fr 1fr 1fr; gap:16px; margin-top:15px;">
+    <div style="display:grid; grid-template-columns: repeat(3, 1fr); gap:16px; margin-top:15px;">
       <div style="background:#161b22; padding:14px; border-radius:6px; border-left:4px solid #58a6ff;">
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
           <span style="font-size:11px; color:#8b949e; letter-spacing:1px;">SCHEDULER PRINCIPAL</span>
@@ -260,6 +260,49 @@
                         </ul>
                         <div style="font-size:10px; color:#8b949e; margin-top:10px;">Última ejecución: <span id="mlpSchedulerLastRun">—</span></div>
                     </div>
+                    <div style="background:#161b22; padding:14px; border-radius:6px; border-left:4px solid #f0883e;">
+                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+                            <span style="font-size:11px; color:#8b949e; letter-spacing:1px;">RETE ENGINE</span>
+                            <span id="reteStatus" style="font-size:10px; padding:2px 8px; border-radius:10px;">—</span>
+                        </div>
+                        <div style="font-size:10px; color:#8b949e; margin-bottom:10px;">Cada 2 min · Lógica</div>
+                        <div style="display:grid; grid-template-columns: 1fr 1fr 1fr; gap:8px; margin-bottom:12px;">
+                            <div><div style="font-size:9px; color:#8b949e;">PID</div><div id="retePid" style="font-size:13px;">—</div></div>
+                            <div><div style="font-size:9px; color:#8b949e;">CPU</div><div id="reteCpu" style="font-size:13px;">~1s</div></div>
+                            <div><div style="font-size:9px; color:#8b949e;">RAM</div><div id="reteMem" style="font-size:13px;"><50M</div></div>
+                        </div>
+                        <div style="font-size:10px; color:#8b949e;">Última regla:</div>
+                        <div id="reteLastRule" style="font-size:12px; color:#f0883e; font-weight:bold; margin-top:5px;">—</div>
+                    </div>
+                    <div style="background:#161b22; padding:14px; border-radius:6px; border-left:4px solid #58a6ff;">
+                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+                            <span style="font-size:11px; color:#8b949e; letter-spacing:1px;">SEGWIT AUDIT</span>
+                            <span id="segwitStatus" style="font-size:10px; padding:2px 8px; border-radius:10px;">—</span>
+                        </div>
+                        <div style="font-size:10px; color:#8b949e; margin-bottom:10px;">Cada 6h · P2WPKH</div>
+                        <div style="display:grid; grid-template-columns: 1fr 1fr 1fr; gap:8px; margin-bottom:12px;">
+                            <div><div style="font-size:9px; color:#8b949e;">PID</div><div id="segwitPid" style="font-size:13px;">—</div></div>
+                            <div><div style="font-size:9px; color:#8b949e;">CPU</div><div id="segwitCpu" style="font-size:13px;">~1s</div></div>
+                            <div><div style="font-size:9px; color:#8b949e;">RAM</div><div id="segwitMem" style="font-size:13px;"><150M</div></div>
+                        </div>
+                        <div style="font-size:10px; color:#8b949e;">Últimas válidas:</div>
+                        <div id="segwitValids" style="font-size:12px; color:#3fb950; font-weight:bold; margin-top:5px;">—</div>
+                    </div>
+                    <div style="background:#161b22; padding:14px; border-radius:6px; border-left:4px solid #bc8cff;">
+                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+                            <span style="font-size:11px; color:#8b949e; letter-spacing:1px;">TAPROOT AUDIT</span>
+                            <span id="taprootStatus" style="font-size:10px; padding:2px 8px; border-radius:10px;">—</span>
+                        </div>
+                        <div style="font-size:10px; color:#8b949e; margin-bottom:10px;">Cada 6h · P2TR (BIP341)</div>
+                        <div style="display:grid; grid-template-columns: 1fr 1fr 1fr; gap:8px; margin-bottom:12px;">
+                            <div><div style="font-size:9px; color:#8b949e;">PID</div><div id="taprootPid" style="font-size:13px;">—</div></div>
+                            <div><div style="font-size:9px; color:#8b949e;">CPU</div><div id="taprootCpu" style="font-size:13px;">~1s</div></div>
+                            <div><div style="font-size:9px; color:#8b949e;">RAM</div><div id="taprootMem" style="font-size:13px;"><150M</div></div>
+                        </div>
+                        <div style="font-size:10px; color:#8b949e;">Últimas válidas:</div>
+                        <div id="taprootValids" style="font-size:12px; color:#3fb950; font-weight:bold; margin-top:5px;">—</div>
+                    </div>
+
 
     </div>
   </div>
@@ -841,7 +884,60 @@ setInterval(fetchAxeosLogs, 2000);
         } catch(e) { console.error('Error update MLP:', e); }
     }, 5000);
     </script>
+
+    <script>
+    setInterval(async () => {
+        try {
+            const res = await fetch('/api/schedulers');
+            const data = await res.json();
+            
+            const setVal = (id, val) => {
+                const el = document.getElementById(id);
+                if (el) el.textContent = val;
+            };
+            
+            const setStatus = (id, isActive) => {
+                const el = document.getElementById(id);
+                if (el) {
+                    el.textContent = isActive ? 'ACTIVE' : 'OFF';
+                    el.style.background = isActive ? '#3fb950' : '#f85149';
+                    el.style.color = '#0a0e14';
+                    el.style.fontWeight = 'bold';
+                }
+            };
+
+            // RETE
+            if (data.rete) {
+                setStatus('reteStatus', data.rete.active);
+                setVal('retePid', data.rete.pid || '—');
+                setVal('reteCpu', data.rete.cpu || '~1s');
+                setVal('reteMem', data.rete.mem || '<50M');
+                setVal('reteLastRule', data.rete.last_rule || 'Ninguna');
+            }
+
+            // SEGWIT
+            if (data.segwit) {
+                setStatus('segwitStatus', data.segwit.active);
+                setVal('segwitPid', data.segwit.pid || '—');
+                setVal('segwitCpu', data.segwit.cpu || '~1s');
+                setVal('segwitMem', data.segwit.mem || '<150M');
+                setVal('segwitValids', (data.segwit.last_valids || 0) + ' txs');
+            }
+
+            // TAPROOT
+            if (data.taproot) {
+                setStatus('taprootStatus', data.taproot.active);
+                setVal('taprootPid', data.taproot.pid || '—');
+                setVal('taprootCpu', data.taproot.cpu || '~1s');
+                setVal('taprootMem', data.taproot.mem || '<150M');
+                setVal('taprootValids', (data.taproot.last_valids || 0) + ' txs');
+            }
+
+        } catch(e) { console.error('Update error:', e); }
+    }, 5000);
+    </script>
 </body>
+
 
 </html>
 
