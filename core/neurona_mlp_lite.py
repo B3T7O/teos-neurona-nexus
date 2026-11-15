@@ -85,7 +85,36 @@ def get_live_error_rates():
     except Exception:
         return 0.0, 0.0, 0.0
 
+
+def check_perfect_shares():
+    import urllib.request
+    try:
+        with urllib.request.urlopen("http://192.168.18.45/api/system/info", timeout=5) as r:
+            d = json.loads(r.read())
+        error = float(d.get("errorPercentage", 1.0))
+        shares = d.get("sharesAccepted", 0)
+        
+        if error < 0.01:
+            PERFECT_LOG = BASE_DIR / "data" / "processed" / "perfect_shares.jsonl"
+            entry = {
+                "timestamp": datetime.now(timezone.utc).isoformat(),
+                "error_rate": error,
+                "shares_accepted": shares,
+                "hashrate_10m": round(d.get("hashRate_10m", 0), 2),
+                "frequency": d.get("actualFrequency", 0),
+                "temp": d.get("temp", 0)
+            }
+            PERFECT_LOG.parent.mkdir(parents=True, exist_ok=True)
+            with PERFECT_LOG.open("a", encoding="utf-8") as f:
+                f.write(json.dumps(entry) + "\n")
+            print(f"🏆 ¡HITO PERFECTO! {shares} shares con 0.00% de error. Guardado en perfect_shares.jsonl")
+        else:
+            print(f"⏸️ Error actual: {error:.2f}% (Esperando el 0.00%)")
+    except Exception as e:
+        print(f"❌ Error verificando shares perfectos: {e}")
+
 def train_and_predict():
+
 
     samples = load_recent_data(300)
     if len(samples) < 20:
@@ -165,3 +194,7 @@ if __name__ == "__main__":
         print(f"✅ Predicción enviada al Learning Loop: {result['predicted_hashRate_GHs']:.2f} GH/s")
     else:
         print(f"⚠️ {result['msg']}")
+
+    # --- VERIFICADOR DE SHARES PERFECTOS ---
+    check_perfect_shares()
+
