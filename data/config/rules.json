@@ -20,10 +20,10 @@
     {
       "id": "proteccion_error",
       "priority": 1.5,
-      "description": "Si el error sube del 1.2%, volver al punto seguro de 580 MHz.",
+      "description": "Si el error sube del 0.8%, volver al punto seguro de 580 MHz.",
       "conditions": {
         "errorPercentage": {
-          "gte": 1.2
+          "gte": 0.8
         }
       },
       "action": {
@@ -32,35 +32,15 @@
       }
     },
     {
-      "id": "turbo_produccion",
-      "priority": 2,
-      "description": "Modo Turbo: Si est\u00e1 fr\u00edo (<54\u00b0C) y el error es bajo (<0.6%), subir a 590 MHz para maximizar hashrate.",
-      "conditions": {
-        "temp": {
-          "lte": 54
-        },
-        "vrTemp": {
-          "lte": 68
-        },
-        "errorPercentage": {
-          "lte": 0.6
-        }
-      },
-      "action": {
-        "type": "set_frequency",
-        "value": 590
-      }
-    },
-    {
       "id": "modo_estable",
       "priority": 3,
-      "description": "Si no se cumple el Turbo, mantener el punto dulce en 580 MHz.",
+      "description": "Mantener SIEMPRE el punto dulce en 580 MHz. Prioridad: Precisi\u00f3n sobre Hashrate.",
       "conditions": {
         "temp": {
-          "lte": 56
+          "lte": 58
         },
         "vrTemp": {
-          "lte": 70
+          "lte": 72
         }
       },
       "action": {
