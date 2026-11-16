@@ -832,7 +832,7 @@ class Handler(SimpleHTTPRequestHandler):
             import subprocess
             import json as _json
             from datetime import datetime, timezone
-            data = {"main": {}, "lite": {}, "mlp": {}, "timestamp": datetime.now(timezone.utc).isoformat()}
+            data = {"main": {}, "lite": {}, "mlp": {}, "rete": {}, "segwit": {}, "taproot": {}, "timestamp": datetime.now(timezone.utc).isoformat()}
             for name, service in [("main", "teos-neurona-scheduler.service"), ("lite", "teos-neurona-scheduler-lite.service")]:
                 try:
                     status = subprocess.run(["systemctl", "is-active", service], capture_output=True, text=True, timeout=3).stdout.strip()
@@ -889,6 +889,31 @@ class Handler(SimpleHTTPRequestHandler):
             except Exception as e:
                 data["mlp"]["error"] = str(e)
             # ----------------------
+            # --- LOGICA EXTENDIDA (RETE, SEGWIT, TAPROOT) ---
+            try:
+                data['rete']['active'] = (subprocess.run(['systemctl', 'is-active', 'teos-neurona-rete.timer'], capture_output=True, text=True, timeout=3).stdout.strip() == 'active')
+                data['rete']['pid'] = 'Timer'
+                rete_log = ROOT / 'data' / 'processed' / 'rete_decisions.jsonl'
+                data['rete']['last_rule'] = 'Ninguna'
+                if rete_log.exists():
+                    rlines = rete_log.open('r').readlines()
+                    if rlines:
+                        data['rete']['last_rule'] = _json.loads(rlines[-1]).get('rule', 'Ninguna')
+                data['segwit']['active'] = (subprocess.run(['systemctl', 'is-active', 'teos-segwit-audit.timer'], capture_output=True, text=True, timeout=3).stdout.strip() == 'active')
+                data['segwit']['pid'] = 'Timer'
+                sw_path = ROOT / 'data' / 'audit' / 'segwit_verify_full.json'
+                data['segwit']['last_valids'] = 0
+                if sw_path.exists():
+                    data['segwit']['last_valids'] = _json.loads(sw_path.read()).get('valid', 0)
+                data['taproot']['active'] = (subprocess.run(['systemctl', 'is-active', 'teos-taproot-audit.timer'], capture_output=True, text=True, timeout=3).stdout.strip() == 'active')
+                data['taproot']['pid'] = 'Timer'
+                tp_path = ROOT / 'data' / 'audit' / 'taproot_verify_full.json'
+                data['taproot']['last_valids'] = 0
+                if tp_path.exists():
+                    data['taproot']['last_valids'] = _json.loads(tp_path.read()).get('valid', 0)
+            except Exception as e:
+                pass
+            # ------------------------------------------------
             self.wfile.write(_json.dumps(data).encode())
             return
 

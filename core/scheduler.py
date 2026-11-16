@@ -59,14 +59,14 @@ def main():
                 print("Error en el ciclo Ridge experimental; el programador continuará:")
                 traceback.print_exc()
             try:
-                run_bitaxe_control()
+                pass  # movido a scheduler_lite: run_bitaxe_control()
                 _evo_record("bitaxe_control", "ok", "ejecutado por scheduler")
             except Exception:
                 print("Error en la comprobación Bitaxe (sin aplicar cambios):")
                 traceback.print_exc()
 
             try:
-                run_pulse_series()
+                pass  # movido a scheduler_lite: run_pulse_series()
                 _evo_record("pulse_series", "ok", "serie temporal actualizada")
             except Exception as e:
                 _evo_record("pulse_series", "failed", f"error: {e}")
@@ -78,7 +78,7 @@ def main():
                 _evo_record("live_pulse", "failed", f"error en live_pulse: {e}")
 
             try:
-                run_network_context()
+                pass  # movido a scheduler_lite: run_network_context()
                 _evo_record("network_context", "ok", "analisis de red actualizado")
             except Exception as e:
                 _evo_record("network_context", "failed", f"error en network_context: {e}")
