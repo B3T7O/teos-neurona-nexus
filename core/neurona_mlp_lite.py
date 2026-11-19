@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# TEOS Neurona Nexus - MLP Lite (Con Memoria Estable)
+# TEOS Neurona Nexus - MLP Lite (Sin Fuga de Información)
 import json
 import time
 import numpy as np
@@ -13,10 +13,11 @@ LOG_FILE = BASE_DIR / "data" / "processed" / "axeos_logs.json"
 OUTPUT_FILE = BASE_DIR / "data" / "processed" / "learning_predictions_v2.jsonl"
 MODEL_FILE = BASE_DIR / "data" / "processed" / "model_weights.json"
 
-INPUT_SIZE = 10
+# INPUT_SIZE reducido de 10 a 9 (eliminamos hashRate actual)
+INPUT_SIZE = 9
 HIDDEN_SIZE = 12
 OUTPUT_SIZE = 1
-LEARNING_RATE = 0.005  # Reducido para mayor estabilidad
+LEARNING_RATE = 0.005
 
 def get_regex_features():
     if not LOG_FILE.exists(): return 0, 0.0
@@ -72,14 +73,17 @@ def train_and_predict():
     share_count, avg_diff = get_regex_features()
     stale_rate, dup_rate, above_rate = get_live_error_rates()
 
+    # X ya NO incluye el hashRate actual (eliminada la fuga de información)
     X = np.array([
-        [s.get("temp", 0), s.get("vrTemp", 0), s.get("hashRate", 0),
-         s.get("hashRate_10m", s.get("hashRate", 0)), s.get("errorPercentage", 0),
+        [s.get("temp", 0), s.get("vrTemp", 0), 
+         s.get("hashRate_10m", s.get("hashRate", 0)), 
+         s.get("errorPercentage", 0), 
          share_count, avg_diff, stale_rate, dup_rate, above_rate] for s in samples
     ])
+    # Y sigue siendo el hashRate actual (lo que queremos predecir)
     Y = np.array([[s["hashRate"]] for s in samples])
 
-    # 1. Cargar memoria (si existe) o calcular normalización nueva
+    # Carga de memoria o inicialización
     if MODEL_FILE.exists():
         try:
             with MODEL_FILE.open("r", encoding="utf-8") as f:
@@ -106,11 +110,9 @@ def train_and_predict():
         W1 = np.random.randn(INPUT_SIZE, HIDDEN_SIZE) * np.sqrt(2.0 / INPUT_SIZE)
         W2 = np.random.randn(HIDDEN_SIZE, OUTPUT_SIZE) * np.sqrt(2.0 / HIDDEN_SIZE)
 
-    # 2. Normalizar usando la normalización cargada
     X_norm = (X - X_mean) / X_std
     Y_norm = (Y - Y_mean) / Y_std
 
-    # 3. Entrenar con clipping de pesos
     epochs = 100
     for epoch in range(epochs):
         Z1 = np.dot(X_norm, W1)
@@ -123,18 +125,15 @@ def train_and_predict():
         dW1 = np.dot(X_norm.T, dZ1) / len(X_norm)
         W2 -= LEARNING_RATE * dW2
         W1 -= LEARNING_RATE * dW1
-        # Clipping para evitar explosión
         W1 = np.clip(W1, -5.0, 5.0)
         W2 = np.clip(W2, -5.0, 5.0)
 
-    # 4. Predecir
     last_X = (X[-1:] - X_mean) / X_std
     pred_Z1 = np.dot(last_X, W1)
     pred_A1 = np.maximum(0, pred_Z1)
     pred_Z2 = np.dot(pred_A1, W2)
     pred_real = (pred_Z2[0][0] * Y_std) + Y_mean
 
-    # 5. Guardar memoria (con la normalización usada)
     try:
         with MODEL_FILE.open("w", encoding="utf-8") as f:
             json.dump({
@@ -151,11 +150,11 @@ def train_and_predict():
         "source_timestamp": timestamp,
         "method": "mlp_lite",
         "predicted_hashRate_GHs": float(pred_real),
-        "current_hashRate_GHs": float(X[-1][2])
+        "current_hashRate_GHs": float(Y[-1][0])
     }
 
 if __name__ == "__main__":
-    print(f"[{datetime.now().strftime('%H:%M:%S')}] Entrenando MLP Lite...")
+    print(f"[{datetime.now().strftime('%H:%M:%S')}] Entrenando MLP Lite (Sin Fuga de Información)...")
     result = train_and_predict()
     if "status" not in result:
         OUTPUT_FILE.parent.mkdir(parents=True, exist_ok=True)
