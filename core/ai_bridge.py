@@ -10,12 +10,24 @@ LOG_PATH = ROOT / "data/processed/ai_bridge_log.jsonl"
 BITAXE_URL = "http://192.168.18.45/api/system/info"
 
 # Límites de Seguridad (El Cinturón)
-MIN_FREQ = 550
+MIN_FREQ = 575
 MAX_FREQ = 600
 MAX_CHANGE = 5  # ±5 MHz por ciclo
-MIN_CONFIDENCE = 1.0  # 3% de diferencia mínima para actuar
+MIN_CONFIDENCE = 0.8  # 3% de diferencia mínima para actuar
+
+
+def get_evolve_prediction():
+    evolve_path = ROOT / "data" / "processed" / "evolve_live_prediction.json"
+    if not evolve_path.exists(): return None
+    try:
+        with evolve_path.open("r", encoding="utf-8") as f:
+            data = json.load(f)
+            return data.get("combined_prediction_GHs")
+    except Exception:
+        return None
 
 def get_latest_prediction():
+
     if not PRED_PATH.exists(): return None
     with PRED_PATH.open("r", encoding="utf-8", errors="ignore") as f:
         lines = f.readlines()
@@ -68,11 +80,18 @@ def main():
         if last_change.tzinfo is None:
             last_change = last_change.replace(tzinfo=timezone.utc)
         elapsed = (now - last_change).total_seconds()
-        if elapsed < 900: # 15 minutos
+        if elapsed < 180: # 3 minutos (Reacción rápida)
             print(f"⏸️ IA en cooldown. Último cambio hace {elapsed/60:.1f} min. Esperando para evitar ruido.")
             return
 
-    pred = get_latest_prediction()
+    # Intentar leer al Campeón Evolutivo primero
+    pred = get_evolve_prediction()
+    
+    if pred is not None:
+        print("🧬 Usando predicción del Campeón Evolutivo.")
+    else:
+        print("🤖 Campeón no disponible. Usando predicción del MLP Lite.")
+        pred = get_latest_prediction()
     if pred is None:
         print("⏳ Sin predicciones de la IA. Esperando...")
         return
@@ -85,6 +104,13 @@ def main():
 
     current_hr = state.get("hashRate_10m", 0)
     current_freq = state.get("actualFrequency", 580)
+    
+    # RESCATE: Si estamos por debajo del mínimo, subir inmediatamente
+    if current_freq < MIN_FREQ:
+        print(f"🛡️ Rescate: Freq actual ({current_freq}) < MIN_FREQ ({MIN_FREQ}). Subiendo a {MIN_FREQ}.")
+        apply_change(MIN_FREQ, "Rescate de límite mínimo")
+        return
+
     temp = state.get("temp", 0)
     vr_temp = state.get("vrTemp", 0)
     error = state.get("errorPercentage", 0)
