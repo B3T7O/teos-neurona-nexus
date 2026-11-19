@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# TEOS Neurona Nexus - MLP Lite (7 Features, sin Nonces, 12 Neuronas)
+# TEOS Neurona Nexus - MLP Lite (Con Memoria a Largo Plazo)
 import json
 import time
 import numpy as np
@@ -8,24 +8,27 @@ from pathlib import Path
 from datetime import datetime, timezone
 
 BASE_DIR = Path(__file__).resolve().parent.parent
-INPUT_FILE = BASE_DIR / "data/raw/bitaxe_samples.marked.jsonl"
-LOG_FILE = BASE_DIR / "data/processed/axeos_logs.json"
-OUTPUT_FILE = BASE_DIR / "data/processed/learning_predictions_v2.jsonl"
+INPUT_FILE = BASE_DIR / "data" / "raw" / "bitaxe_samples.marked.jsonl"
+LOG_FILE = BASE_DIR / "data" / "processed" / "axeos_logs.json"
+OUTPUT_FILE = BASE_DIR / "data" / "processed" / "learning_predictions_v2.jsonl"
+MODEL_FILE = BASE_DIR / "data" / "processed" / "model_weights.json"
 
-# Arquitectura optimizada (Poda)
-INPUT_SIZE = 10    # 10 sentidos (Ojo Clínico completo)
-HIDDEN_SIZE = 12  # 12 neuronas (más humilde)
+# Arquitectura de la Red Neuronal
+INPUT_SIZE = 10
+HIDDEN_SIZE = 12
 OUTPUT_SIZE = 1
 LEARNING_RATE = 0.01
 
 def get_regex_features():
-    """Extrae shares y dificultad de los logs usando Regex (sin nonces)."""
     if not LOG_FILE.exists():
-        return 0, 0.0
+        return 0, 0.0, 0.0, 0.0, 0.0
 
     pattern = re.compile(r"Nonce\s+([A-Fa-f0-9]+)\s+diff\s+([\d\.]+)")
     share_count = 0
     diffs = []
+    stale_count = 0
+    dup_count = 0
+    above_count = 0
 
     try:
         with LOG_FILE.open("r", encoding="utf-8", errors="ignore") as f:
@@ -53,7 +56,22 @@ def get_regex_features():
         pass
 
     avg_diff = sum(diffs) / len(diffs) if diffs else 0.0
-    return share_count, avg_diff
+    return share_count, avg_diff, stale_count, dup_count, above_count
+
+def get_live_error_rates():
+    import urllib.request
+    try:
+        with urllib.request.urlopen("http://192.168.18.45/api/system/info", timeout=5) as r:
+            d = json.loads(r.read())
+            reasons = d.get("sharesRejectedReasons", [])
+            accepted = d.get("sharesAccepted", 1)
+            if accepted == 0: accepted = 1
+            stale = next((x["count"] for x in reasons if x.get("message") == "Stale"), 0)
+            duplicate = next((x["count"] for x in reasons if x.get("message") == "Duplicate"), 0)
+            above = next((x["count"] for x in reasons if x.get("message") == "Above target"), 0)
+            return (stale / accepted) * 100, (duplicate / accepted) * 100, (above / accepted) * 100
+    except Exception:
+        return 0.0, 0.0, 0.0
 
 def load_recent_data(n=300):
     if not INPUT_FILE.exists(): return []
@@ -67,63 +85,14 @@ def load_recent_data(n=300):
             except: pass
     return samples[-n:] if len(samples) >= n else []
 
-
-def get_live_error_rates():
-    import urllib.request
-    try:
-        with urllib.request.urlopen("http://192.168.18.45/api/system/info", timeout=5) as r:
-            d = json.loads(r.read())
-            reasons = d.get("sharesRejectedReasons", [])
-            accepted = d.get("sharesAccepted", 1)
-            if accepted == 0: accepted = 1
-            
-            stale = next((x["count"] for x in reasons if x.get("message") == "Stale"), 0)
-            duplicate = next((x["count"] for x in reasons if x.get("message") == "Duplicate"), 0)
-            above = next((x["count"] for x in reasons if x.get("message") == "Above target"), 0)
-            
-            return (stale / accepted) * 100, (duplicate / accepted) * 100, (above / accepted) * 100
-    except Exception:
-        return 0.0, 0.0, 0.0
-
-
-def check_perfect_shares():
-    import urllib.request
-    try:
-        with urllib.request.urlopen("http://192.168.18.45/api/system/info", timeout=5) as r:
-            d = json.loads(r.read())
-        error = float(d.get("errorPercentage", 1.0))
-        shares = d.get("sharesAccepted", 0)
-        
-        if error < 0.01:
-            PERFECT_LOG = BASE_DIR / "data" / "processed" / "perfect_shares.jsonl"
-            entry = {
-                "timestamp": datetime.now(timezone.utc).isoformat(),
-                "error_rate": error,
-                "shares_accepted": shares,
-                "hashrate_10m": round(d.get("hashRate_10m", 0), 2),
-                "frequency": d.get("actualFrequency", 0),
-                "temp": d.get("temp", 0)
-            }
-            PERFECT_LOG.parent.mkdir(parents=True, exist_ok=True)
-            with PERFECT_LOG.open("a", encoding="utf-8") as f:
-                f.write(json.dumps(entry) + "\n")
-            print(f"🏆 ¡HITO PERFECTO! {shares} shares con 0.00% de error. Guardado en perfect_shares.jsonl")
-        else:
-            print(f"⏸️ Error actual: {error:.2f}% (Esperando el 0.00%)")
-    except Exception as e:
-        print(f"❌ Error verificando shares perfectos: {e}")
-
 def train_and_predict():
-
-
     samples = load_recent_data(300)
     if len(samples) < 20:
         return {"status": "waiting_for_data", "msg": f"Faltan datos ({len(samples)}/20)"}
 
-    share_count, avg_diff = get_regex_features()
+    share_count, avg_diff, stale_rate, dup_rate, above_rate = get_regex_features()
     stale_rate, dup_rate, above_rate = get_live_error_rates()
 
-    # 10 Features
     X = np.array([
         [
             s.get("temp", 0),
@@ -146,9 +115,28 @@ def train_and_predict():
     Y_mean, Y_std = Y.mean(), Y.std() + 1e-8
     Y_norm = (Y - Y_mean) / Y_std
 
-    np.random.seed(42)
-    W1 = np.random.randn(INPUT_SIZE, HIDDEN_SIZE) * np.sqrt(2.0 / INPUT_SIZE)
-    W2 = np.random.randn(HIDDEN_SIZE, OUTPUT_SIZE) * np.sqrt(2.0 / HIDDEN_SIZE)
+    # --- CARGA DE MEMORIA (PERSISTENCIA) ---
+    if MODEL_FILE.exists():
+        try:
+            with MODEL_FILE.open("r", encoding="utf-8") as f:
+                mem = json.load(f)
+            W1 = np.array(mem["W1"])
+            W2 = np.array(mem["W2"])
+            X_mean = np.array(mem["X_mean"])
+            X_std = np.array(mem["X_std"])
+            Y_mean = mem["Y_mean"]
+            Y_std = mem["Y_std"]
+            print("🧠 Memoria cargada: Continuando desde el aprendizaje anterior.")
+        except Exception as e:
+            print(f"⚠️ Error cargando memoria: {e}. Iniciando desde cero.")
+            np.random.seed(42)
+            W1 = np.random.randn(INPUT_SIZE, HIDDEN_SIZE) * np.sqrt(2.0 / INPUT_SIZE)
+            W2 = np.random.randn(HIDDEN_SIZE, OUTPUT_SIZE) * np.sqrt(2.0 / HIDDEN_SIZE)
+    else:
+        print("🆕 No hay memoria previa. Iniciando red neuronal desde cero.")
+        np.random.seed(42)
+        W1 = np.random.randn(INPUT_SIZE, HIDDEN_SIZE) * np.sqrt(2.0 / INPUT_SIZE)
+        W2 = np.random.randn(HIDDEN_SIZE, OUTPUT_SIZE) * np.sqrt(2.0 / HIDDEN_SIZE)
 
     epochs = 200
     for epoch in range(epochs):
@@ -174,6 +162,20 @@ def train_and_predict():
 
     pred_real = (pred_norm * Y_std) + Y_mean
 
+    # --- GUARDAR MEMORIA (PERSISTENCIA) ---
+    try:
+        with MODEL_FILE.open("w", encoding="utf-8") as f:
+            json.dump({
+                "W1": W1.tolist(),
+                "W2": W2.tolist(),
+                "X_mean": X_mean.tolist(),
+                "X_std": X_std.tolist(),
+                "Y_mean": float(Y_mean),
+                "Y_std": float(Y_std)
+            }, f)
+    except Exception as e:
+        print(f"⚠️ Error guardando memoria: {e}")
+
     timestamp = datetime.now(timezone.utc).isoformat()
     return {
         "prediction_id": f"{timestamp}|mlp_lite",
@@ -184,7 +186,7 @@ def train_and_predict():
     }
 
 if __name__ == "__main__":
-    print(f"[{datetime.now().strftime('%H:%M:%S')}] Entrenando MLP Lite (12 neuronas, 10 features (Ojo Clínico))...")
+    print(f"[{datetime.now().strftime('%H:%M:%S')}] Entrenando MLP Lite (12 neuronas, 10 features)...")
     result = train_and_predict()
 
     if "status" not in result:
@@ -194,7 +196,3 @@ if __name__ == "__main__":
         print(f"✅ Predicción enviada al Learning Loop: {result['predicted_hashRate_GHs']:.2f} GH/s")
     else:
         print(f"⚠️ {result['msg']}")
-
-    # --- VERIFICADOR DE SHARES PERFECTOS ---
-    check_perfect_shares()
-
