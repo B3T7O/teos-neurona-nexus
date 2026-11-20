@@ -3,6 +3,7 @@ import json
 import urllib.request
 from pathlib import Path
 from datetime import datetime, timezone
+import os, time
 
 ROOT = Path(__file__).resolve().parent.parent
 PRED_PATH = ROOT / "data/processed/learning_predictions_v2.jsonl"
@@ -109,6 +110,7 @@ def main():
     if current_freq < MIN_FREQ:
         print(f"🛡️ Rescate: Freq actual ({current_freq}) < MIN_FREQ ({MIN_FREQ}). Subiendo a {MIN_FREQ}.")
         apply_change(MIN_FREQ, "Rescate de límite mínimo")
+        with open("data/processed/last_freq_change.txt", "w") as f: f.write(str(time.time()))
         return
 
     temp = state.get("temp", 0)
@@ -124,15 +126,35 @@ def main():
     if current_hr == 0: return
     diff_pct = ((pred - current_hr) / current_hr) * 100
 
+    # 2.1. Límite de Cordura (Sanity Check): Ignorar outliers absurdos (> 15%)
+    if abs(diff_pct) > 15.0:
+        print(f"⚠️ IA ignoró predicción absurda (diff={diff_pct:.1f}%). Posible outlier de datos.")
+        return
+
+    # 2.2. Periodo de Enfriamiento (Cooldown): Máximo 1 cambio cada 30 minutos
+    cooldown_file = "data/processed/last_freq_change.txt"
+    cooldown_seconds = 30 * 60  # 30 minutos
+    now = time.time()
+    
+    if os.path.exists(cooldown_file):
+        with open(cooldown_file, 'r') as f:
+            last_change = float(f.read().strip())
+        if now - last_change < cooldown_seconds:
+            mins_left = int((cooldown_seconds - (now - last_change)) / 60)
+            print(f"⏳ IA en periodo de enfriamiento. Esperar {mins_left} min antes del próximo ajuste.")
+            return
+
     # 3. Decidir acción (solo cambios pequeños)
     if diff_pct > MIN_CONFIDENCE and current_freq < MAX_FREQ:
         new_freq = min(current_freq + MAX_CHANGE, MAX_FREQ)
         if new_freq != current_freq:
             apply_change(new_freq, f"IA predice +{diff_pct:.1f}% → +5 MHz")
+            with open("data/processed/last_freq_change.txt", "w") as f: f.write(str(time.time()))
     elif diff_pct < -MIN_CONFIDENCE and current_freq > MIN_FREQ:
         new_freq = max(current_freq - MAX_CHANGE, MIN_FREQ)
         if new_freq != current_freq:
             apply_change(new_freq, f"IA predice {diff_pct:.1f}% → -5 MHz")
+            with open("data/processed/last_freq_change.txt", "w") as f: f.write(str(time.time()))
     else:
         print(f"⏸️ IA no actúa (diff={diff_pct:.1f}%, freq={current_freq} MHz)")
 
