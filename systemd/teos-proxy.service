@@ -1,0 +1,17 @@
+[Unit]
+Description=TEOS Stratum Lite Proxy (forwarder to CKPool)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+WorkingDirectory=%h/teos-neurona-nexus
+ExecStart=/usr/bin/python3 %h/teos-neurona-nexus/core/lite_proxy.py
+StandardOutput=append:%h/teos-neurona-nexus/data/logs/lite_proxy.log
+StandardError=append:%h/teos-neurona-nexus/data/logs/lite_proxy.log
+Restart=always
+RestartSec=5
+TimeoutStopSec=5
+
+[Install]
+WantedBy=default.target
