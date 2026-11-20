@@ -22,6 +22,7 @@ SERVICES = [
     "teos-nexus-collector.service",
     "teos-neurona-scheduler.service",
     "teos-neurona-api.service",
+    "teos-proxy.service",
 ]
 EXECUTE = "--execute" in sys.argv
 
