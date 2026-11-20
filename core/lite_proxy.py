@@ -25,6 +25,9 @@ def forward(source, destination):
 def handle_client(client_socket):
     try:
         upstream_socket = socket.create_connection((UPSTREAM_HOST, UPSTREAM_PORT), timeout=10)
+        upstream_socket.settimeout(None)
+        upstream_socket.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, 1)
+        client_socket.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, 1)
         # Crear hilos para bidireccionalidad
         t1 = threading.Thread(target=forward, args=(client_socket, upstream_socket))
         t2 = threading.Thread(target=forward, args=(upstream_socket, client_socket))
