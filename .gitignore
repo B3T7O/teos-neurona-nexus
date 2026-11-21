@@ -63,3 +63,8 @@ venv/
 
 # Backups
 *.bak*
+
+# Runtime logs and packet captures (may contain sensitive mining data)
+data/logs/*.log
+/tmp/stratum*.pcap
+/tmp/stratum*.txt
