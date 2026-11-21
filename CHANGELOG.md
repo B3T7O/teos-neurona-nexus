@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+- **Estabilización de hardware:** Solucionado el estado latched del VRM con descanso de 2h.
+- **MLP Lite Patch (EXP-048):** Modificado el objetivo del modelo para predecir `hashRate_10m` en lugar del instantáneo, evitando el colapso al promedio y deteniendo la oscilación del AI Bridge.
+
 ### Planned
 - **Unify the main dashboard.** Currently there are two dashboards:
   - `pitch.html` → cinematic, responsive, 9 panels connected (canonical).

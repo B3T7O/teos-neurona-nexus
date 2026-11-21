@@ -81,7 +81,7 @@ def train_and_predict():
          share_count, avg_diff, stale_rate, dup_rate, above_rate] for s in samples
     ])
     # Y sigue siendo el hashRate actual (lo que queremos predecir)
-    Y = np.array([[s["hashRate"]] for s in samples])
+    Y = np.array([[s.get("hashRate_10m", s["hashRate"])] for s in samples])
 
     # Carga de memoria o inicialización
     if MODEL_FILE.exists():
