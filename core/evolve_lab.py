@@ -15,7 +15,7 @@ from datetime import datetime, timezone
 
 ROOT = Path(__file__).resolve().parent.parent
 OUTCOMES = ROOT / "data" / "processed" / "learning_outcomes_v2.jsonl"
-OUTPUT = ROOT / "data" / "processed" / "evolve_champion.json"
+OUTPUT = ROOT / "data" / "processed" / "evolve_champion_candidate.json"  # propone; el campeon en uso no se toca
 
 # Parámetros del algoritmo genético (Opción B)
 POPULATION_SIZE = 100
