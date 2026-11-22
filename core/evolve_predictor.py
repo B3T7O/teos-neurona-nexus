@@ -10,6 +10,7 @@ OUTPUT_FILE = ROOT / "data" / "processed" / "evolve_live_prediction.json"
 
 # Modelos en cuarentena: se ignoran aunque el campeón les asigne peso.
 QUARANTINED = {"mlp_lite"}
+MAX_SOURCE_AGE_S = 1200  # cada metodo debe haber predicho hace < 20 min; si no, no cuenta
 
 def get_latest_predictions():
     preds = {}
@@ -20,7 +21,15 @@ def get_latest_predictions():
                 p = json.loads(line)
                 method = p.get("method")
                 if method:
-                    preds[method] = p.get("predicted_hashRate_GHs")
+                    ts = p.get("source_timestamp")
+                    try:
+                        age = (datetime.now(timezone.utc) - datetime.fromisoformat(ts.replace("Z", "+00:00"))).total_seconds()
+                    except Exception:
+                        age = None
+                    if age is not None and age <= MAX_SOURCE_AGE_S:
+                        preds[method] = p.get("predicted_hashRate_GHs")
+                    else:
+                        preds.pop(method, None)  # sin fecha o vieja: no cuenta
             except: pass
     return preds
 
@@ -50,7 +59,7 @@ def main():
         else:
             print(f"⚠️ El método '{method}' no tiene predicciones recientes. Saltando...")
 
-    if total_weight_used > 0:
+    if total_weight_used > 0 and len(details) >= 3:
         # Normalizar por si falta algún método
         final_pred = total_prediction / total_weight_used
         
