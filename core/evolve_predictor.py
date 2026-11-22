@@ -8,6 +8,9 @@ CHAMPION_FILE = ROOT / "data" / "processed" / "evolve_champion.json"
 PRED_FILE = ROOT / "data" / "processed" / "learning_predictions_v2.jsonl"
 OUTPUT_FILE = ROOT / "data" / "processed" / "evolve_live_prediction.json"
 
+# Modelos en cuarentena: se ignoran aunque el campeón les asigne peso.
+QUARANTINED = {"mlp_lite"}
+
 def get_latest_predictions():
     preds = {}
     if not PRED_FILE.exists(): return preds
@@ -37,6 +40,8 @@ def main():
     details = {}
 
     for method, weight in weights.items():
+        if method in QUARANTINED:
+            continue
         if method in latest_preds:
             pred = latest_preds[method]
             total_prediction += pred * weight
