@@ -14,7 +14,7 @@ BITAXE_URL = "http://192.168.18.45/api/system/info"
 MIN_FREQ = 575
 MAX_FREQ = 600
 MAX_CHANGE = 5  # ±5 MHz por ciclo
-MIN_CONFIDENCE = 0.8  # 3% de diferencia mínima para actuar
+MIN_CONFIDENCE = 3.0  # % mínimo de diferencia (predicción vs hashrate 10m) para actuar
 
 
 def get_evolve_prediction():
