@@ -15,6 +15,7 @@ MIN_FREQ = 575
 MAX_FREQ = 600
 MAX_CHANGE = 5  # ±5 MHz por ciclo
 MIN_CONFIDENCE = 3.0  # % mínimo de diferencia (predicción vs hashrate 10m) para actuar
+MAX_PRED_AGE_S = 900  # el campeón debe tener < 15 min; si no, no se actúa
 
 
 def get_evolve_prediction():
@@ -23,6 +24,11 @@ def get_evolve_prediction():
     try:
         with evolve_path.open("r", encoding="utf-8") as f:
             data = json.load(f)
+            ts = data.get("timestamp")
+            age = (datetime.now(timezone.utc) - datetime.fromisoformat(ts)).total_seconds()
+            if age > MAX_PRED_AGE_S:
+                print(f"⚠️ Campeón obsoleto ({age/60:.0f} min); no se usa.")
+                return None
             return data.get("combined_prediction_GHs")
     except Exception:
         return None
@@ -91,8 +97,8 @@ def main():
     if pred is not None:
         print("🧬 Usando predicción del Campeón Evolutivo.")
     else:
-        print("🤖 Campeón no disponible. Usando predicción del MLP Lite.")
-        pred = get_latest_prediction()
+        print("🛑 Campeón no disponible o desactualizado; no se actúa (sin respaldo).")
+        pred = None
     if pred is None:
         print("⏳ Sin predicciones de la IA. Esperando...")
         return
