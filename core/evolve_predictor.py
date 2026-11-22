@@ -62,8 +62,10 @@ def main():
         }
         
         OUTPUT_FILE.parent.mkdir(parents=True, exist_ok=True)
-        with OUTPUT_FILE.open("w", encoding="utf-8") as f:
+        tmp = OUTPUT_FILE.with_suffix(".json.tmp")
+        with tmp.open("w", encoding="utf-8") as f:
             json.dump(output, f, indent=2)
+        tmp.replace(OUTPUT_FILE)  # reemplazo atomico: nadie lee un archivo a medias
             
         print(f"✅ Predicción del Campeón Evolutivo: {final_pred:.2f} GH/s")
     else:
