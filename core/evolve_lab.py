@@ -150,7 +150,7 @@ def main():
         scored.sort(key=lambda x: x[0])
 
         # Guardar el mejor global
-        if scored[0][0] < best_fitness_overall:
+        if best_overall is None or scored[0][0] < best_fitness_overall:
             best_fitness_overall = scored[0][0]
             best_overall = dict(scored[0][1])
 

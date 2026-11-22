@@ -7,9 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- **EXP-049:** expediente técnico sobre validación predictiva, cuarentena del MLP Lite, calidad de muestras y seguridad temporal.
+
+### Changed
+- **Evaluación adaptativa:** `referencia_1h` es el ganador histórico observado, pero su validación prospectiva sigue pendiente.
+
+
 ### Fixed
+- **Protección temporal:** AI Bridge rechaza predicciones futuras y vencidas; Evolve Predictor descarta fuentes fuera de su ventana de 20 minutos. Pruebas sintéticas superadas.
 - **Estabilización de hardware:** Solucionado el estado latched del VRM con descanso de 2h.
-- **MLP Lite Patch (EXP-048):** Modificado el objetivo del modelo para predecir `hashRate_10m` en lugar del instantáneo, evitando el colapso al promedio y deteniendo la oscilación del AI Bridge.
+- **MLP Lite (revisión EXP-049):** el cambio de objetivo descrito en EXP-048 no fue suficiente para validar la capacidad predictiva. La evaluación posterior encontró fuga de objetivo y escalas degeneradas; el modelo permanece en cuarentena.
 
 ### Planned
 - **Unify the main dashboard.** Currently there are two dashboards:

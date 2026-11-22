@@ -26,7 +26,7 @@ def get_latest_predictions():
                         age = (datetime.now(timezone.utc) - datetime.fromisoformat(ts.replace("Z", "+00:00"))).total_seconds()
                     except Exception:
                         age = None
-                    if age is not None and age <= MAX_SOURCE_AGE_S:
+                    if age is not None and 0 <= age <= MAX_SOURCE_AGE_S:
                         preds[method] = p.get("predicted_hashRate_GHs")
                     else:
                         preds.pop(method, None)  # sin fecha o vieja: no cuenta

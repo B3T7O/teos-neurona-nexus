@@ -15,9 +15,19 @@ from pathlib import Path
 try:
     from core import online_error_learner
     from core import contextual_error_learner
+    from core.sample_quality import (
+        classify as classify_sample_quality,
+        HR_MIN_PER_MHZ,
+        HR_MAX_PER_MHZ,
+    )
 except ModuleNotFoundError:
     import online_error_learner
     import contextual_error_learner
+    from sample_quality import (
+        classify as classify_sample_quality,
+        HR_MIN_PER_MHZ,
+        HR_MAX_PER_MHZ,
+    )
 
 ROOT = Path(__file__).resolve().parents[1]
 RAW = ROOT / "data/raw/bitaxe_samples.marked.jsonl"
@@ -77,13 +87,22 @@ def number(row, *keys):
     return None
 
 
+def valid_reference(value, frequency):
+    """Valida una referencia usando los límites físicos del Bitaxe."""
+    if value is None or frequency is None:
+        return None
+    lower = frequency * HR_MIN_PER_MHZ
+    upper = frequency * HR_MAX_PER_MHZ
+    return value if lower <= value <= upper else None
+
+
 def append_jsonl(path, row):
     with path.open("a", encoding="utf-8") as f:
         f.write(json.dumps(row, ensure_ascii=False, separators=(",", ":")) + "\n")
 
 
 
-def choose_adaptive_method(outcomes, latest_timestamp):
+def choose_adaptive_method(outcomes, latest_timestamp, available_methods=None):
     """Selecciona por MAE reciente sin consultar resultados futuros."""
     def epoch(value):
         if not value:
@@ -96,11 +115,23 @@ def choose_adaptive_method(outcomes, latest_timestamp):
             return None
 
     cutoff = epoch(latest_timestamp)
+
+    if available_methods is None:
+        methods = SELECTABLE_METHODS
+        fallback = "referencia_1h"
+    else:
+        available = set(available_methods)
+        methods = tuple(
+            method for method in SELECTABLE_METHODS
+            if method in available
+        )
+        fallback = methods[0] if methods else "ultimo_hashrate"
+
     if cutoff is None:
-        return "referencia_1h", 0, None
+        return fallback, 0, None
 
     candidates = []
-    for method in SELECTABLE_METHODS:
+    for method in methods:
         eligible = []
         for outcome in outcomes:
             if outcome.get("method") != method:
@@ -120,7 +151,7 @@ def choose_adaptive_method(outcomes, latest_timestamp):
             candidates.append((mae, method, len(recent)))
 
     if not candidates:
-        return "referencia_1h", 0, None
+        return fallback, 0, None
 
     mae, method, count = min(candidates, key=lambda item: item[0])
     return method, count, mae
@@ -221,20 +252,49 @@ def main():
 
     # Leer el histórico sin modificar el archivo raw.
     by_timestamp = {}
+    quality_rejected = 0
+    invalid_reference_values = 0
+
     for row in read_jsonl(RAW):
+        quality_tag = str(row.get("quality") or "").strip().lower()
+
+        if quality_tag and quality_tag != "ok":
+            quality_rejected += 1
+            continue
+
+        try:
+            computed_quality = classify_sample_quality(row)
+        except (AttributeError, TypeError, ValueError, OverflowError):
+            computed_quality = "invalid"
+
+        if computed_quality != "ok":
+            quality_rejected += 1
+            continue
         ts = row.get("timestamp") or row.get("captured_at") or row.get("datetime")
         t = parse_time(ts)
         actual = number(row, "hashRate", "hashrate", "hashrate_GHs")
         if t is None or actual is None:
             continue
 
+        frequency = number(row, "frequency")
+        raw_rate_10m = number(row, "hashRate_10m", "hashrate_10m_GHs")
+        raw_rate_1h = number(row, "hashRate_1h", "hashrate_1h_GHs")
+
+        rate_10m = valid_reference(raw_rate_10m, frequency)
+        rate_1h = valid_reference(raw_rate_1h, frequency)
+
+        if raw_rate_10m is not None and rate_10m is None:
+            invalid_reference_values += 1
+        if raw_rate_1h is not None and rate_1h is None:
+            invalid_reference_values += 1
+
         by_timestamp[str(ts)] = {
             "timestamp": str(ts),
             "_time": t,
             "actual": actual,
-            "rate_10m": number(row, "hashRate_10m", "hashrate_10m_GHs"),
-            "rate_1h": number(row, "hashRate_1h", "hashrate_1h_GHs"),
-              "frequency": number(row, "frequency"),
+            "rate_10m": rate_10m,
+            "rate_1h": rate_1h,
+              "frequency": frequency,
               "temp": number(row, "temp"),
               "vr_temp": number(row, "vrTemp"),
               "shares_accepted": number(row, "sharesAccepted"),
@@ -247,6 +307,10 @@ def main():
         }
 
     samples = sorted(by_timestamp.values(), key=lambda x: x["_time"])
+
+    print("Muestras rechazadas por calidad:", quality_rejected)
+    print("Referencias rechazadas por rango físico:", invalid_reference_values)
+
     from core.anomaly_memory import record_contextual_anomalies
     record_contextual_anomalies(samples)
     samples = filter_contextual_anomalies(samples)
@@ -415,39 +479,46 @@ def main():
     previous = latest["_time"]
     source = latest["timestamp"]
 
-    if latest["rate_10m"] is None or latest["rate_1h"] is None:
-        print("Muestra más reciente sin referencias 10m/1h; se omite.")
-    else:
-        forecasts = {
-            "ultimo_hashrate": latest["actual"],
-            "referencia_10m": latest["rate_10m"],
-            "referencia_1h": latest["rate_1h"],
-            "media_ultimas_5": sum(s["actual"] for s in samples[-5:]) / 5,
-        }
+    forecasts = {
+        "ultimo_hashrate": latest["actual"],
+        "media_ultimas_5": sum(s["actual"] for s in samples[-5:]) / 5,
+    }
 
-        known_outcomes = read_jsonl(OUTCOMES)
-        selected_method, selection_n, selection_mae = choose_adaptive_method(
-            known_outcomes, source
-        )
+    if latest["rate_10m"] is not None:
+        forecasts["referencia_10m"] = latest["rate_10m"]
 
-        base_forecast = forecasts[selected_method]
-        online = online_error_learner.predict(base_forecast)
-        context_keys = latest.get("contextual_context_keys", ["normal"])
-        contextual_online = contextual_error_learner.predict(
-            base_forecast, context_keys
-        )
-        adaptive_forecast = base_forecast
-        forecasts["adaptativo_neurona"] = adaptive_forecast
+    if latest["rate_1h"] is not None:
+        forecasts["referencia_1h"] = latest["rate_1h"]
 
-        print(
-            f"Base adaptativa: {selected_method}; "
-            f"resultados para selección: {selection_n}; "
-            f"sesgo aprendido: {online['learned_bias_GHs']:+.3f} GH/s; "
-            f"actualizaciones persistidas: {online['updates']}"
-        )
+    known_outcomes = read_jsonl(OUTCOMES)
+    available_methods = tuple(
+        method for method in SELECTABLE_METHODS
+        if method in forecasts
+    )
 
+    selected_method, selection_n, selection_mae = choose_adaptive_method(
+        known_outcomes, source, available_methods
+    )
 
-        for method in list(METHODS) + ["adaptativo_neurona"]:
+    base_forecast = forecasts[selected_method]
+    online = online_error_learner.predict(base_forecast)
+    context_keys = latest.get("contextual_context_keys", ["normal"])
+    contextual_online = contextual_error_learner.predict(
+        base_forecast, context_keys
+    )
+
+    # Se mantiene aislado el aprendizaje experimental.
+    adaptive_forecast = base_forecast
+    forecasts["adaptativo_neurona"] = adaptive_forecast
+
+    print(
+        f"Base adaptativa: {selected_method}; "
+        f"resultados para selección: {selection_n}; "
+        f"sesgo aprendido: {online['learned_bias_GHs']:+.3f} GH/s; "
+        f"actualizaciones persistidas: {online['updates']}"
+    )
+
+    for method in list(METHODS) + ["adaptativo_neurona"]:
             pid = f"{source}|{method}"
             if pid in prediction_ids:
                 continue

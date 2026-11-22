@@ -26,8 +26,8 @@ def get_evolve_prediction():
             data = json.load(f)
             ts = data.get("timestamp")
             age = (datetime.now(timezone.utc) - datetime.fromisoformat(ts)).total_seconds()
-            if age > MAX_PRED_AGE_S:
-                print(f"⚠️ Campeón obsoleto ({age/60:.0f} min); no se usa.")
+            if not 0 <= age <= MAX_PRED_AGE_S:
+                print(f"⚠️ Campeón fuera de ventana temporal ({age/60:.0f} min); no se usa.")
                 return None
             return data.get("combined_prediction_GHs")
     except Exception:
