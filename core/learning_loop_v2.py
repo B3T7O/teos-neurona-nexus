@@ -35,6 +35,10 @@ METHODS = (
 )
 
 
+# mlp_lite en cuarentena: este loop no genera su forecast, no puede ser elegido.
+SELECTABLE_METHODS = tuple(m for m in METHODS if m != "mlp_lite")
+
+
 def read_jsonl(path):
     rows = []
     if not path.exists():
@@ -96,7 +100,7 @@ def choose_adaptive_method(outcomes, latest_timestamp):
         return "referencia_1h", 0, None
 
     candidates = []
-    for method in METHODS:
+    for method in SELECTABLE_METHODS:
         eligible = []
         for outcome in outcomes:
             if outcome.get("method") != method:
