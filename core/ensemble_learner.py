@@ -20,6 +20,9 @@ OUTCOMES = Path("data/processed/learning_outcomes_v2.jsonl")
 META_REC = Path("data/processed/meta_learner_recommendations.jsonl")
 ENSEMBLE_OUT = Path("data/processed/ensemble_predictions_v2.jsonl")
 
+# Modelos en cuarentena: ni pesan ni cuentan para el ensemble.
+QUARANTINED = {"mlp_lite"}
+
 def _tail_lines(path, max_bytes=50000):
     if not path.exists(): return []
     try:
@@ -51,6 +54,8 @@ def _get_weights():
     weights = {}
     for item in ranking:
         method = item.get("method")
+        if method in QUARANTINED:
+            continue
         # Aceptar el campo nuevo (combined) o el viejo (median) por compatibilidad
         ape = item.get("combined_median_ape", item.get("median_ape", 99.0))
         if ape <= 0: ape = 0.01
@@ -77,13 +82,12 @@ def _get_latest_predictions():
             
     if not by_target: return None, "No hay predicciones válidas"
     
-    latest_target = max(by_target.keys())
-    predictions = by_target[latest_target]
-    
-    if len(predictions) < 3:
-        return None, f"Solo {len(predictions)} predicciones para el último timestamp"
-        
-    return predictions, latest_target
+    # Ultimo target con al menos 3 métodos válidos (antes: solo el más reciente a secas).
+    for latest_target in sorted(by_target.keys(), reverse=True):
+        predictions = {m: v for m, v in by_target[latest_target].items() if m not in QUARANTINED}
+        if len(predictions) >= 3:
+            return predictions, latest_target
+    return None, "Ningún target reciente con al menos 3 métodos válidos"
 
 def compute_ensemble():
     weights, w_status, confidence = _get_weights()
