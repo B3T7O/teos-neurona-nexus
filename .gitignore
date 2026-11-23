@@ -68,3 +68,10 @@ venv/
 data/logs/*.log
 /tmp/stratum*.pcap
 /tmp/stratum*.txt
+backup/
+.venv-shadow-v2/
+data/overclock_watchdog.jsonl
+data/critical_backups/
+data/processed/*.png
+data/processed/*.txt
+TEOS_DIAGNOSTICO.txt

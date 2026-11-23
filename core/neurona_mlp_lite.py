@@ -11,6 +11,8 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 INPUT_FILE = BASE_DIR / "data" / "raw" / "bitaxe_samples.marked.jsonl"
 LOG_FILE = BASE_DIR / "data" / "processed" / "axeos_logs.json"
 OUTPUT_FILE = BASE_DIR / "data" / "processed" / "learning_predictions_v2.jsonl"
+MLP_ENABLED = False  # Desactivado tras rechazo EXP-049 (improvement=-71.6%)
+
 MODEL_FILE = BASE_DIR / "data" / "processed" / "model_weights.json"
 
 # INPUT_SIZE reducido de 10 a 9 (eliminamos hashRate actual)
