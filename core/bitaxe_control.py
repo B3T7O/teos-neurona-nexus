@@ -15,12 +15,12 @@ from pathlib import Path
 from urllib.request import Request, urlopen
 
 import os
-BITAXE_IP = os.environ.get("BITAXE_IP", "192.168.1.100")
+BITAXE_IP = os.environ.get("BITAXE_IP", "192.168.18.45")
 BASE = f"http://{BITAXE_IP}"
 LOG = Path("data/raw/bitaxe_control.jsonl")
 
 def get_json(path):
-    with urlopen(BASE + path, timeout=5) as response:
+    with urlopen(BASE + path, timeout=15) as response:
         return json.load(response)
 
 def patch_json(path, payload):
@@ -30,7 +30,7 @@ def patch_json(path, payload):
         headers={"Content-Type": "application/json"},
         method="PATCH",
     )
-    with urlopen(request, timeout=5) as response:
+    with urlopen(request, timeout=15) as response:
         body = response.read().decode()
         return json.loads(body) if body else {}
 
@@ -135,6 +135,28 @@ def predict_next_temp():
     return pred, None
 
 
+
+def watchdog_recently_rolled_back():
+    import time
+    from datetime import datetime
+    log = Path(__file__).resolve().parent.parent / "logs" / "overclock_watchdog.log"
+    if not log.exists():
+        return False
+    try:
+        # Leer las últimas 50 líneas
+        lines = log.read_text(encoding="utf-8", errors="ignore").splitlines()[-50:]
+        for line in reversed(lines):
+            if "ROLLBACK" in line:
+                # Formato: [2026-11-25T03:08:46] ROLLBACK: ...
+                ts_str = line.split("]")[0][1:]
+                dt = datetime.fromisoformat(ts_str)
+                if (datetime.now() - dt).total_seconds() < 2700: # 45 min
+                    return True
+                return False
+    except Exception:
+        pass
+    return False
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument(
@@ -193,8 +215,8 @@ def main():
     allowed_voltage = asic["voltageOptions"]
     if not isinstance(allowed_freq, list) or not isinstance(allowed_voltage, list):
         raise RuntimeError("AxeOS no devolvió listas válidas de opciones.")
-    if freq not in allowed_freq or voltage not in allowed_voltage:
-        raise RuntimeError("La configuración actual no coincide con las opciones AxeOS.")
+    # Se permiten valores actuales personalizados de AxeOS.
+    # Los nuevos valores propuestos se validan por separado antes de aplicarlos.
 
     # Modo predictivo (opcional)
     temp_predicted = None
@@ -241,7 +263,8 @@ def main():
     elif hashrate < expected * 0.90:
         reason = "Hashrate muy inferior al esperado; requiere diagnóstico, no overclock automático."
 
-    if target_freq not in allowed_freq or target_voltage not in allowed_voltage:
+    if ((target_freq != freq and target_freq not in allowed_freq) or
+            (target_voltage != voltage and target_voltage not in allowed_voltage)):
         raise RuntimeError("Ajuste propuesto fuera de las opciones admitidas por AxeOS.")
 
     result = {
@@ -263,10 +286,13 @@ def main():
     try:
         if args.apply and (target_freq != freq or target_voltage != voltage):
             result["write_attempted"] = True
-            patch_json("/api/system", {
-                "frequency": target_freq,
-                "coreVoltage": target_voltage,
-            })
+            payload = {}
+            if target_freq != freq:
+                payload["frequency"] = target_freq
+            if target_voltage != voltage:
+                payload["coreVoltage"] = target_voltage
+
+            patch_json("/api/system", payload)
             after = get_json("/api/system/info")
             result["verified"] = {
                 "frequency": after.get("frequency"),
